@@ -30,3 +30,17 @@ export async function update(req: Request, res: Response) {
   const consultation = await consultationsService.updateConsultation(req.params.id, parsed.data);
   res.json({ data: consultation });
 }
+
+export async function getPatientHistory(req: Request, res: Response) {
+  const consultations = await consultationsService.getConsultationHistoryByPatient(
+    req.params.patientId,
+  );
+  res.json({ data: consultations });
+}
+
+export async function getPatientEvolution(req: Request, res: Response) {
+  const evolution = await consultationsService.getConsultationEvolutionByPatient(
+    req.params.patientId,
+  );
+  res.json({ data: evolution });
+}

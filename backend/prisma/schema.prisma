@@ -88,6 +88,7 @@ model Patient {
 
   appointments  Appointment[]
   consultations Consultation[]
+  pathologies   PatientPathology[]
 
   @@map("patients")
 }
@@ -117,18 +118,30 @@ model Consultation {
   reason          String?
   diagnosis       String?
   treatment       String?
+  control         String?
   observations    String?
   paymentStatus   PaymentStatus @default(PENDIENTE)
   paymentAmount   Float?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
-  patient      Patient        @relation(fields: [patientId], references: [id])
-  doctor       DoctorProfile  @relation(fields: [doctorId], references: [id])
-  appointment  Appointment?   @relation(fields: [appointmentId], references: [id])
-  lensometry   Lensometry?
-  visualAcuity VisualAcuity?
-  finalFormula FinalFormula?
+  patient               Patient                @relation(fields: [patientId], references: [id])
+  doctor                DoctorProfile          @relation(fields: [doctorId], references: [id])
+  appointment           Appointment?           @relation(fields: [appointmentId], references: [id])
+  lensometry            Lensometry?
+  visualAcuity          VisualAcuity?
+  finalFormula          FinalFormula?
+  ocularMotility        OcularMotility?
+  externalExam          ExternalExam?
+  cftaMoscopia          CftaMoscopia?
+  keratometry           Keratometry?
+  colorTest             ColorTest?
+  stereopsisTest        StereopsisTest?
+  refraction            Refraction?
+  subjectiveRefraction  SubjectiveRefraction?
+  eyeDiagram            EyeDiagram?
+  pathologies           ConsultationPathology[]
+  medicalNotes          MedicalNote[]
 
   @@map("consultations")
 }
@@ -231,4 +244,237 @@ model AuditLog {
   user User? @relation(fields: [userId], references: [id])
 
   @@map("audit_logs")
+}
+
+// ─── Phase 2 Models ───────────────────────────────────────────────────────────
+
+model PatientPathology {
+  id          String   @id @default(cuid())
+  patientId   String
+  name        String
+  description String?
+  diagnosedAt DateTime?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  patient Patient @relation(fields: [patientId], references: [id])
+
+  @@map("patient_pathologies")
+}
+
+model OcularMotility {
+  id             String  @id @default(cuid())
+  consultationId String  @unique
+
+  // Versiones/Ducciones (texto libre o codificado)
+  versions       String?
+  ductions       String?
+  coverTest      String?
+  hirschberg     String?
+  npc            String?  // Punto próximo de convergencia
+  notes          String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  consultation Consultation @relation(fields: [consultationId], references: [id])
+
+  @@map("ocular_motilities")
+}
+
+model ExternalExam {
+  id             String  @id @default(cuid())
+  consultationId String  @unique
+
+  // Párpados, conjuntivas, córnea, etc.
+  eyelids        String?
+  conjunctiva    String?
+  cornea         String?
+  iris           String?
+  pupil          String?
+  lens           String?
+  fundus         String?
+  notes          String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  consultation Consultation @relation(fields: [consultationId], references: [id])
+
+  @@map("external_exams")
+}
+
+model CftaMoscopia {
+  id             String  @id @default(cuid())
+  consultationId String  @unique
+
+  // Campo visual / Tonometría / A-scan / Moscas volantes
+  campimetry     String?
+  tonometry      String?
+  ascan          String?
+  floaters       String?
+  notes          String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  consultation Consultation @relation(fields: [consultationId], references: [id])
+
+  @@map("cfta_moscopias")
+}
+
+model Keratometry {
+  id             String  @id @default(cuid())
+  consultationId String  @unique
+
+  // Ojo derecho
+  odK1           Float?
+  odK1Axis       Int?
+  odK2           Float?
+  odK2Axis       Int?
+
+  // Ojo izquierdo
+  oiK1           Float?
+  oiK1Axis       Int?
+  oiK2           Float?
+  oiK2Axis       Int?
+
+  notes          String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  consultation Consultation @relation(fields: [consultationId], references: [id])
+
+  @@map("keratometries")
+}
+
+model ColorTest {
+  id             String  @id @default(cuid())
+  consultationId String  @unique
+
+  odResult       String?
+  oiResult       String?
+  testType       String?  // Ishihara, Farnsworth, etc.
+  notes          String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  consultation Consultation @relation(fields: [consultationId], references: [id])
+
+  @@map("color_tests")
+}
+
+model StereopsisTest {
+  id             String  @id @default(cuid())
+  consultationId String  @unique
+
+  result         String?
+  testType       String?  // TNO, Randot, etc.
+  seconds        Int?     // Arc seconds
+  notes          String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  consultation Consultation @relation(fields: [consultationId], references: [id])
+
+  @@map("stereopsis_tests")
+}
+
+model Refraction {
+  id             String  @id @default(cuid())
+  consultationId String  @unique
+
+  // Refracción objetiva (esquiascopía/autorrefractómetro)
+  // Ojo derecho
+  odSphere       Float?
+  odCylinder     Float?
+  odAxis         Int?
+
+  // Ojo izquierdo
+  oiSphere       Float?
+  oiCylinder     Float?
+  oiAxis         Int?
+
+  notes          String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  consultation Consultation @relation(fields: [consultationId], references: [id])
+
+  @@map("refractions")
+}
+
+model SubjectiveRefraction {
+  id             String  @id @default(cuid())
+  consultationId String  @unique
+
+  // Refracción subjetiva
+  // Ojo derecho
+  odSphere       Float?
+  odCylinder     Float?
+  odAxis         Int?
+  odAdd          Float?
+  odVision       String?
+
+  // Ojo izquierdo
+  oiSphere       Float?
+  oiCylinder     Float?
+  oiAxis         Int?
+  oiAdd          Float?
+  oiVision       String?
+
+  notes          String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  consultation Consultation @relation(fields: [consultationId], references: [id])
+
+  @@map("subjective_refractions")
+}
+
+model EyeDiagram {
+  id             String  @id @default(cuid())
+  consultationId String  @unique
+
+  // Base64 images or text annotations
+  odDiagram      String?
+  oiDiagram      String?
+  notes          String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  consultation Consultation @relation(fields: [consultationId], references: [id])
+
+  @@map("eye_diagrams")
+}
+
+model ConsultationPathology {
+  id             String   @id @default(cuid())
+  consultationId String
+  name           String
+  description    String?
+  createdAt      DateTime @default(now())
+
+  consultation Consultation @relation(fields: [consultationId], references: [id])
+
+  @@map("consultation_pathologies")
+}
+
+model MedicalNote {
+  id             String   @id @default(cuid())
+  consultationId String
+  content        String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  consultation Consultation @relation(fields: [consultationId], references: [id])
+
+  @@map("medical_notes")
 }

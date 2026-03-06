@@ -284,7 +284,7 @@ export function PrintConsultationPage() {
       <div className="print-footer">
         <p>
           Documento generado el {formatDate(new Date().toISOString())} — Sistema de Gestión
-          Clínica Óptica (Fase 1)
+          Clínica Óptica (Fase 2)
         </p>
       </div>
 

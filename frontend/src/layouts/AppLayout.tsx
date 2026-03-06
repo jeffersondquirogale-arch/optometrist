@@ -23,6 +23,12 @@ export function AppLayout() {
           >
             Nueva Consulta
           </NavLink>
+          <NavLink
+            to="/appointments"
+            className={({ isActive }) => (isActive ? 'active' : '')}
+          >
+            Citas
+          </NavLink>
         </nav>
       </header>
 
@@ -31,7 +37,7 @@ export function AppLayout() {
       </main>
 
       <footer className="app-footer">
-        <p>Sistema de Gestión Clínica Óptica — Fase 1</p>
+        <p>Sistema de Gestión Clínica Óptica — Fase 2</p>
       </footer>
     </div>
   );

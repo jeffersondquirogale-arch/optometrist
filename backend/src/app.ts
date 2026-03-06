@@ -13,6 +13,7 @@ import { doctorsRouter } from './modules/doctors/doctors.router';
 import { consultationsRouter } from './modules/consultations/consultations.router';
 import { appointmentsRouter } from './modules/appointments/appointments.router';
 import { printRouter } from './modules/print/print.router';
+import { chartsRouter } from './modules/charts/charts.router';
 
 const app = express();
 
@@ -34,6 +35,7 @@ app.use('/api/doctors', doctorsRouter);
 app.use('/api/consultations', consultationsRouter);
 app.use('/api/appointments', appointmentsRouter);
 app.use('/api/print', printRouter);
+app.use('/api/charts', chartsRouter);
 
 // ─── Middlewares de error ─────────────────────────────────────────────────────
 app.use(notFoundMiddleware);

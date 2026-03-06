@@ -12,6 +12,15 @@ export async function getConsultationForPrint(consultationId: string) {
       lensometry: true,
       visualAcuity: true,
       finalFormula: true,
+      ocularMotility: true,
+      externalExam: true,
+      cftaMoscopia: true,
+      keratometry: true,
+      colorTest: true,
+      stereopsisTest: true,
+      refraction: true,
+      subjectiveRefraction: true,
+      pathologies: true,
     },
   });
   if (!consultation) throw new AppError('Consulta no encontrada', 404);

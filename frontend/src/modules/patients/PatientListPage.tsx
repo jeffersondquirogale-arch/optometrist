@@ -42,19 +42,30 @@ export function PatientListPage() {
                 {patients.map((patient) => (
                   <tr key={patient.id}>
                     <td>
-                      {patient.lastName}, {patient.firstName}
+                      <Link to={`/patients/${patient.id}`} style={{ color: '#2563eb' }}>
+                        {patient.lastName}, {patient.firstName}
+                      </Link>
                     </td>
                     <td>{patient.documentId ?? '—'}</td>
                     <td>{patient.phone ?? '—'}</td>
                     <td>{patient.email ?? '—'}</td>
                     <td>
-                      <Link
-                        to={`/consultations/new?patientId=${patient.id}`}
-                        className="btn btn-secondary"
-                        style={{ fontSize: '0.8rem', padding: '0.3rem 0.7rem' }}
-                      >
-                        Nueva consulta
-                      </Link>
+                      <div className="flex gap-2">
+                        <Link
+                          to={`/patients/${patient.id}/history`}
+                          className="btn btn-secondary"
+                          style={{ fontSize: '0.8rem', padding: '0.3rem 0.7rem' }}
+                        >
+                          Historial
+                        </Link>
+                        <Link
+                          to={`/consultations/new?patientId=${patient.id}`}
+                          className="btn btn-secondary"
+                          style={{ fontSize: '0.8rem', padding: '0.3rem 0.7rem' }}
+                        >
+                          Nueva consulta
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 ))}

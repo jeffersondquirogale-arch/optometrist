@@ -1,13 +1,13 @@
 # Sistema de Gestión Clínica Óptica
 
-> **Fase 1 — Bootstrap inicial**  
-> Este repositorio contiene la base del sistema de gestión para una clínica óptica (optometrista). Las fases posteriores completarán los módulos clínicos y mejorarán la fidelidad de impresión.
+> **Fase 2 — Consultas clínicas ricas, historial, evolución e impresión dinámica**  
+> La Fase 1 estableció el bootstrap inicial. La Fase 2 convierte el sistema en una herramienta clínicamente útil: consultas con múltiples secciones oftalmológicas, historial por paciente, evolución longitudinal de la fórmula y agudeza visual, y una ficha de impresión dinámica en A4.
 
 ---
 
 ## Descripción del proyecto
 
-Sistema web para la gestión integral de una clínica óptica, que permite registrar pacientes, gestionar citas, crear consultas oftalmológicas y generar fichas de consulta imprimibles en formato A4.
+Sistema web para la gestión integral de una clínica óptica, que permite registrar pacientes, gestionar citas, crear consultas oftalmológicas completas y generar fichas de consulta imprimibles en formato A4.
 
 ---
 
@@ -52,9 +52,10 @@ optometrist/
 │   │   ├── modules/
 │   │   │   ├── patients/          # CRUD de pacientes
 │   │   │   ├── doctors/           # CRUD de perfiles de doctores
-│   │   │   ├── consultations/     # CRUD de consultas
+│   │   │   ├── consultations/     # CRUD + historial + evolución
 │   │   │   ├── appointments/      # CRUD de citas
-│   │   │   └── print/             # Endpoint de impresión
+│   │   │   ├── charts/            # Evolución clínica (series longitudinales)
+│   │   │   └── print/             # Endpoint de impresión dinámica
 │   │   ├── app.ts                 # Configuración de Express
 │   │   └── server.ts              # Punto de entrada del servidor
 │   ├── .env.example
@@ -66,13 +67,14 @@ optometrist/
 │   │   ├── layouts/
 │   │   │   └── AppLayout.tsx      # Layout principal con navegación
 │   │   ├── modules/
-│   │   │   ├── patients/          # Listado y creación de pacientes
-│   │   │   ├── consultations/     # Nueva consulta
+│   │   │   ├── patients/          # Listado, detalle, historial, evolución
+│   │   │   ├── consultations/     # Nueva/editar consulta, detalle
+│   │   │   ├── appointments/      # Listado y gestión de citas
 │   │   │   └── print-template/    # Ficha de consulta imprimible (A4)
 │   │   ├── router/
 │   │   │   └── index.tsx          # Definición de rutas
 │   │   ├── services/
-│   │   │   ├── api.ts             # Cliente API (Axios)
+│   │   │   ├── api.ts             # Cliente API (Axios + tipos TS)
 │   │   │   └── queryClient.ts     # Configuración de React Query
 │   │   ├── styles/
 │   │   │   ├── global.css         # Estilos globales
@@ -127,12 +129,22 @@ El servidor estará disponible en `http://localhost:3000`.
 |---|---|---|
 | GET | `/api/health` | Estado del servidor |
 | GET | `/api/patients` | Listado de pacientes |
+| GET | `/api/patients/:id` | Detalle de paciente |
 | POST | `/api/patients` | Crear paciente |
+| PATCH | `/api/patients/:id` | Actualizar paciente |
 | GET | `/api/doctors` | Listado de doctores |
 | POST | `/api/doctors` | Crear perfil de doctor |
 | GET | `/api/consultations` | Listado de consultas |
-| POST | `/api/consultations` | Crear consulta |
-| GET | `/api/print/consultations/:id` | Datos de consulta para impresión |
+| GET | `/api/consultations/:id` | Detalle de consulta |
+| POST | `/api/consultations` | Crear consulta (con datos clínicos anidados) |
+| PUT | `/api/consultations/:id` | Actualizar consulta |
+| GET | `/api/consultations/patient/:patientId/history` | Historial de consultas del paciente |
+| GET | `/api/consultations/patient/:patientId/evolution` | Serie evolutiva (fórmula + AV) |
+| GET | `/api/charts/patients/:patientId/evolution` | Evolución clínica (series longitudinales) |
+| GET | `/api/appointments` | Listado de citas |
+| POST | `/api/appointments` | Crear cita |
+| PATCH | `/api/appointments/:id` | Actualizar cita |
+| GET | `/api/print/consultations/:id` | Datos de consulta para impresión dinámica |
 
 ### Frontend
 
@@ -155,37 +167,59 @@ La aplicación estará disponible en `http://localhost:5173`.
 |---|---|
 | `/` | Listado de pacientes |
 | `/patients/new` | Crear nuevo paciente |
-| `/consultations/new` | Nueva consulta |
-| `/print/consultations/:id` | Ficha de consulta imprimible (A4) |
+| `/patients/:id` | Detalle del paciente |
+| `/patients/:id/history` | Historial de consultas del paciente |
+| `/patients/:id/evolution` | Evolución clínica longitudinal |
+| `/consultations/new` | Nueva consulta (formulario multisección) |
+| `/consultations/:id` | Detalle de consulta |
+| `/consultations/:id/edit` | Editar consulta |
+| `/appointments` | Listado y gestión de citas |
+| `/print/consultations/:id` | Ficha de consulta imprimible A4 (datos dinámicos) |
 
 ---
 
-## Esquema de la base de datos (Fase 1)
+## Esquema de la base de datos (Fase 2)
 
 El esquema Prisma incluye los siguientes modelos:
 
-- **User** — Usuarios del sistema (staff, doctores)
-- **DoctorProfile** — Perfil profesional del médico (matrícula, clínica, firma)
+### Modelos de Fase 1
+- **User** — Usuarios del sistema
+- **DoctorProfile** — Perfil profesional del médico
 - **Patient** — Datos del paciente
 - **Appointment** — Citas programadas
-- **Consultation** — Consulta oftalmológica completa
-- **Lensometry** — Graduación anterior (lensometría)
-- **VisualAcuity** — Agudeza visual (con y sin corrección)
+- **Consultation** — Consulta oftalmológica
+- **Lensometry** — Graduación anterior
+- **VisualAcuity** — Agudeza visual
 - **FinalFormula** — Fórmula final recetada
-- **AuditLog** — Registro de auditoría de cambios
+- **AuditLog** — Registro de auditoría
+
+### Modelos nuevos en Fase 2
+- **OcularMotility** — Versiones, ducciones, Cover Test, Hirschberg, NPC
+- **ExternalExam** — Párpados, conjuntiva, córnea, iris, pupila, cristalino, fondo
+- **CftaMoscopia** — Campimetría, tonometría, A-scan, moscas volantes
+- **Keratometry** — Queratometría K1/K2 por ojo
+- **ColorTest** — Test de color (Ishihara, Farnsworth, etc.)
+- **StereopsisTest** — Test de estereopsis (TNO, Randot, etc.)
+- **Refraction** — Refracción objetiva
+- **SubjectiveRefraction** — Refracción subjetiva con visión lograda
+- **EyeDiagram** — Diagrama de ojo (anotaciones/imágenes)
+- **ConsultationPathology** — Patologías registradas en la consulta
+- **MedicalNote** — Notas clínicas adicionales
+- **PatientPathology** — Patologías crónicas del paciente
 
 ---
 
-## Notas de la Fase 1
+## Notas de la Fase 2
 
-Esta es la **Fase 1 del bootstrap**. Las fases siguientes contemplarán:
+La Fase 2 amplía el sistema con:
 
-- Autenticación y autorización (JWT / sesiones)
-- Módulo completo de lensometría y agudeza visual desde la UI
-- Mejora de la fidelidad de la ficha de impresión
-- Módulo de citas con calendario
-- Reportes y estadísticas
-- Tests automatizados (unitarios e integración)
+- **Formulario de consulta multisección** con pestañas para cada área clínica
+- **Historial de consultas** por paciente con vista en tabla
+- **Evolución clínica longitudinal** (fórmula y agudeza visual en series de tiempo)
+- **Impresión dinámica** de ficha de consulta (datos reales del backend)
+- **Auditoría automática** de creación y edición de consultas
+- **Gestión de citas** con cambio de estado inline
+- **Perfiles de paciente** con acceso directo a historial y evolución
 
 ---
 

@@ -19,8 +19,7 @@ export async function create(req: Request, res: Response) {
   if (!parsed.success) {
     throw new AppError(parsed.error.errors[0].message, 400);
   }
-  // userId will be populated once authentication middleware is added (Phase 3+)
-  const consultation = await consultationsService.createConsultation(parsed.data);
+  const consultation = await consultationsService.createConsultation(parsed.data, req.user?.id);
   res.status(201).json({ data: consultation });
 }
 
@@ -29,8 +28,11 @@ export async function update(req: Request, res: Response) {
   if (!parsed.success) {
     throw new AppError(parsed.error.errors[0].message, 400);
   }
-  // userId will be populated once authentication middleware is added (Phase 3+)
-  const consultation = await consultationsService.updateConsultation(req.params.id, parsed.data);
+  const consultation = await consultationsService.updateConsultation(
+    req.params.id,
+    parsed.data,
+    req.user?.id,
+  );
   res.json({ data: consultation });
 }
 

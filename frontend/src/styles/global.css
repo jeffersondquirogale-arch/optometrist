@@ -263,3 +263,130 @@ tr:hover td {
   outline: 2px solid var(--color-primary);
   outline-offset: 1px;
 }
+
+/* ─── Login ──────────────────────────────────────────────────────────────── */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-bg);
+  padding: 1rem;
+}
+
+.login-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 2.5rem 2rem;
+  width: 100%;
+  max-width: 400px;
+}
+
+.login-card__header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.login-card__header h1 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: 0.4rem;
+}
+
+.login-card__header p {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.login-form .form-group input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  font-family: inherit;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.login-form .form-group input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(26, 106, 177, 0.15);
+}
+
+.login-form__error {
+  background-color: #fdecea;
+  color: var(--color-danger);
+  border: 1px solid #f5c6cb;
+  border-radius: var(--radius);
+  padding: 0.6rem 1rem;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.btn--primary {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.btn--primary:hover:not(:disabled) {
+  background-color: var(--color-primary-dark);
+}
+
+.btn--ghost {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.btn--ghost:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+}
+
+.btn--sm {
+  padding: 0.3rem 0.8rem;
+  font-size: 0.8rem;
+}
+
+.btn--full {
+  width: 100%;
+  justify-content: center;
+}
+
+/* ─── Header user area ───────────────────────────────────────────────────── */
+.app-header__user {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.app-header__user-name {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.95);
+  line-height: 1.2;
+}
+
+.app-header__user-role {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.65);
+  font-weight: 400;
+}
+
+/* ─── Loading screen ─────────────────────────────────────────────────────── */
+.loading-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  font-size: 1rem;
+}

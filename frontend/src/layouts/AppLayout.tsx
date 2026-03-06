@@ -1,6 +1,21 @@
-import { Outlet, NavLink } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../modules/auth/AuthContext';
+
+const ROLE_LABELS: Record<string, string> = {
+  ADMIN: 'Admin',
+  DOCTOR: 'Doctor',
+  STAFF: 'Personal',
+};
 
 export function AppLayout() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  function handleLogout() {
+    logout();
+    navigate('/login', { replace: true });
+  }
+
   return (
     <div className="app-layout">
       <header className="app-header">
@@ -24,6 +39,17 @@ export function AppLayout() {
             Citas
           </NavLink>
         </nav>
+        {user && (
+          <div className="app-header__user">
+            <span className="app-header__user-name">
+              {user.name}
+              <span className="app-header__user-role">{ROLE_LABELS[user.role] ?? user.role}</span>
+            </span>
+            <button className="btn btn--ghost btn--sm" onClick={handleLogout}>
+              Cerrar sesión
+            </button>
+          </div>
+        )}
       </header>
 
       <main className="app-main">
@@ -31,7 +57,7 @@ export function AppLayout() {
       </main>
 
       <footer className="app-footer">
-        <p>Sistema de Gestión Clínica Óptica — Fase 3C</p>
+        <p>Sistema de Gestión Clínica Óptica — Fase 3A</p>
       </footer>
     </div>
   );

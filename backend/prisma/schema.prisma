@@ -1,0 +1,234 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Gender {
+  MASCULINO
+  FEMENINO
+  OTRO
+}
+
+enum AppointmentStatus {
+  PROGRAMADA
+  CONFIRMADA
+  EN_CURSO
+  COMPLETADA
+  CANCELADA
+  NO_ASISTIO
+}
+
+enum PaymentStatus {
+  PENDIENTE
+  PAGADO
+  PARCIAL
+  ANULADO
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  passwordHash String
+  name         String
+  role         String        @default("STAFF")
+  active       Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  doctorProfile DoctorProfile?
+  auditLogs     AuditLog[]
+
+  @@map("users")
+}
+
+model DoctorProfile {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  licenseNumber  String
+  specialty      String?
+  clinicName     String?
+  clinicAddress  String?
+  clinicPhone    String?
+  signature      String?  // URL o base64 de la firma
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user          User          @relation(fields: [userId], references: [id])
+  consultations Consultation[]
+
+  @@map("doctor_profiles")
+}
+
+model Patient {
+  id           String    @id @default(cuid())
+  firstName    String
+  lastName     String
+  documentId   String?   @unique
+  birthDate    DateTime?
+  gender       Gender?
+  phone        String?
+  email        String?
+  address      String?
+  occupation   String?
+  notes        String?
+  active       Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  appointments  Appointment[]
+  consultations Consultation[]
+
+  @@map("patients")
+}
+
+model Appointment {
+  id          String            @id @default(cuid())
+  patientId   String
+  scheduledAt DateTime
+  reason      String?
+  status      AppointmentStatus @default(PROGRAMADA)
+  notes       String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  patient      Patient       @relation(fields: [patientId], references: [id])
+  consultation Consultation?
+
+  @@map("appointments")
+}
+
+model Consultation {
+  id              String        @id @default(cuid())
+  patientId       String
+  doctorId        String
+  appointmentId   String?       @unique
+  consultationDate DateTime     @default(now())
+  reason          String?
+  diagnosis       String?
+  treatment       String?
+  observations    String?
+  paymentStatus   PaymentStatus @default(PENDIENTE)
+  paymentAmount   Float?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  patient      Patient        @relation(fields: [patientId], references: [id])
+  doctor       DoctorProfile  @relation(fields: [doctorId], references: [id])
+  appointment  Appointment?   @relation(fields: [appointmentId], references: [id])
+  lensometry   Lensometry?
+  visualAcuity VisualAcuity?
+  finalFormula FinalFormula?
+
+  @@map("consultations")
+}
+
+model Lensometry {
+  id             String  @id @default(cuid())
+  consultationId String  @unique
+
+  // Ojo derecho (OD)
+  odSphere       Float?
+  odCylinder     Float?
+  odAxis         Int?
+  odAdd          Float?
+
+  // Ojo izquierdo (OI)
+  oiSphere       Float?
+  oiCylinder     Float?
+  oiAxis         Int?
+  oiAdd          Float?
+
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  consultation Consultation @relation(fields: [consultationId], references: [id])
+
+  @@map("lensometries")
+}
+
+model VisualAcuity {
+  id             String  @id @default(cuid())
+  consultationId String  @unique
+
+  // Sin corrección
+  odScVision     String?
+  oiScVision     String?
+
+  // Con corrección
+  odCcVision     String?
+  oiCcVision     String?
+
+  // Otros
+  nearVision     String?
+  colorVision    String?
+  iop            String?  // Presión intraocular
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  consultation Consultation @relation(fields: [consultationId], references: [id])
+
+  @@map("visual_acuities")
+}
+
+model FinalFormula {
+  id             String  @id @default(cuid())
+  consultationId String  @unique
+
+  // Ojo derecho (OD)
+  odSphere       Float?
+  odCylinder     Float?
+  odAxis         Int?
+  odAdd          Float?
+  odPrism        String?
+
+  // Ojo izquierdo (OI)
+  oiSphere       Float?
+  oiCylinder     Float?
+  oiAxis         Int?
+  oiAdd          Float?
+  oiPrism        String?
+
+  // Datos del lente
+  lensType       String?
+  lensMaterial   String?
+  lensCoating    String?
+  dpOd           Float?  // Distancia pupilar OD
+  dpOi           Float?  // Distancia pupilar OI
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  consultation Consultation @relation(fields: [consultationId], references: [id])
+
+  @@map("final_formulas")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String
+  entity     String
+  entityId   String?
+  oldValues  Json?
+  newValues  Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@map("audit_logs")
+}

@@ -1,0 +1,76 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# docker-compose.yml — Optometrist Clinic System
+#
+# Levanta la pila completa (PostgreSQL + backend + frontend) en un solo comando.
+#
+# Uso rápido:
+#   cp backend/.env.example backend/.env   # editar DATABASE_URL, JWT_SECRET, etc.
+#   docker compose up --build
+#
+# La aplicación quedará disponible en http://localhost (puerto 80).
+# El backend estará en http://localhost:3000 (directo) y en /api (a través del frontend en desarrollo).
+# ──────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ─── Base de datos PostgreSQL ───────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-optometrist}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-optometrist_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-optometrist_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-optometrist}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Backend (Node.js / Express / Prisma) ───────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-optometrist}:${POSTGRES_PASSWORD:-optometrist_pass}@db:5432/${POSTGRES_DB:-optometrist_db}
+      PORT: 3000
+      NODE_ENV: production
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-8h}
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@clinica.com}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-CambiaMeAhora123!}
+      SEED_ADMIN_NAME: ${SEED_ADMIN_NAME:-Administrador}
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # ─── Frontend (React / nginx) ────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:3000/api}
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "80:80"
+
+volumes:
+  postgres_data:

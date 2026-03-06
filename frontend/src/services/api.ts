@@ -1,7 +1,12 @@
 import axios from 'axios';
 
+// En producción, VITE_API_URL debe apuntar a la URL completa del backend
+// (ej: https://api.tu-dominio.com/api). En desarrollo, el proxy de Vite
+// redirige /api al backend local, por lo que la variable puede omitirse.
+const BASE_URL = import.meta.env.VITE_API_URL || '/api';
+
 export const api = axios.create({
-  baseURL: '/api',
+  baseURL: BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },

@@ -1,6 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { patientsApi, Patient } from '../../services/api';
+import { usePermissions } from '../auth/usePermissions';
 
 function formatDate(dateStr?: string) {
   if (!dateStr) return '—';
@@ -20,6 +21,7 @@ function genderLabel(gender?: string) {
 
 export function PatientDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const { canCreateConsultation, canViewClinicalHistory, canViewEvolution } = usePermissions();
 
   const {
     data: patient,
@@ -42,15 +44,21 @@ export function PatientDetailPage() {
           {patient.lastName}, {patient.firstName}
         </h2>
         <div className="flex gap-2">
-          <Link to={`/patients/${id}/history`} className="btn btn-secondary">
-            📋 Historial
-          </Link>
-          <Link to={`/patients/${id}/evolution`} className="btn btn-secondary">
-            📈 Evolución
-          </Link>
-          <Link to={`/consultations/new?patientId=${id}`} className="btn btn-primary">
-            + Nueva Consulta
-          </Link>
+          {canViewClinicalHistory() && (
+            <Link to={`/patients/${id}/history`} className="btn btn-secondary">
+              📋 Historial
+            </Link>
+          )}
+          {canViewEvolution() && (
+            <Link to={`/patients/${id}/evolution`} className="btn btn-secondary">
+              📈 Evolución
+            </Link>
+          )}
+          {canCreateConsultation() && (
+            <Link to={`/consultations/new?patientId=${id}`} className="btn btn-primary">
+              + Nueva Consulta
+            </Link>
+          )}
         </div>
       </div>
 

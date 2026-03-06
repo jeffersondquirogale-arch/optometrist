@@ -1,6 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { patientsApi, consultationsApi, Patient, Consultation } from '../../services/api';
+import { usePermissions } from '../auth/usePermissions';
 
 function formatDate(dateStr?: string) {
   if (!dateStr) return '—';
@@ -23,6 +24,7 @@ function paymentLabel(status: string) {
 
 export function PatientHistoryPage() {
   const { id } = useParams<{ id: string }>();
+  const { canCreateConsultation, canEditConsultation, canPrintConsultation, canViewEvolution } = usePermissions();
 
   const { data: patient } = useQuery<Patient>({
     queryKey: ['patient', id],
@@ -51,12 +53,16 @@ export function PatientHistoryPage() {
           <Link to={`/patients/${id}`} className="btn btn-secondary">
             ← Datos del paciente
           </Link>
-          <Link to={`/patients/${id}/evolution`} className="btn btn-secondary">
-            📈 Evolución
-          </Link>
-          <Link to={`/consultations/new?patientId=${id}`} className="btn btn-primary">
-            + Nueva Consulta
-          </Link>
+          {canViewEvolution() && (
+            <Link to={`/patients/${id}/evolution`} className="btn btn-secondary">
+              📈 Evolución
+            </Link>
+          )}
+          {canCreateConsultation() && (
+            <Link to={`/consultations/new?patientId=${id}`} className="btn btn-primary">
+              + Nueva Consulta
+            </Link>
+          )}
         </div>
       </div>
 
@@ -97,21 +103,25 @@ export function PatientHistoryPage() {
                         >
                           Ver
                         </Link>
-                        <Link
-                          to={`/consultations/${c.id}/edit`}
-                          className="btn btn-secondary"
-                          style={{ fontSize: '0.8rem', padding: '0.3rem 0.7rem' }}
-                        >
-                          ✏️ Editar
-                        </Link>
-                        <Link
-                          to={`/print/consultations/${c.id}`}
-                          className="btn btn-secondary"
-                          style={{ fontSize: '0.8rem', padding: '0.3rem 0.7rem' }}
-                          target="_blank"
-                        >
-                          🖨️
-                        </Link>
+                        {canEditConsultation() && (
+                          <Link
+                            to={`/consultations/${c.id}/edit`}
+                            className="btn btn-secondary"
+                            style={{ fontSize: '0.8rem', padding: '0.3rem 0.7rem' }}
+                          >
+                            ✏️ Editar
+                          </Link>
+                        )}
+                        {canPrintConsultation() && (
+                          <Link
+                            to={`/print/consultations/${c.id}`}
+                            className="btn btn-secondary"
+                            style={{ fontSize: '0.8rem', padding: '0.3rem 0.7rem' }}
+                            target="_blank"
+                          >
+                            🖨️
+                          </Link>
+                        )}
                       </div>
                     </td>
                   </tr>

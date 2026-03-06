@@ -1,5 +1,6 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../modules/auth/AuthContext';
+import { usePermissions } from '../modules/auth/usePermissions';
 
 const ROLE_LABELS: Record<string, string> = {
   ADMIN: 'Admin',
@@ -9,6 +10,7 @@ const ROLE_LABELS: Record<string, string> = {
 
 export function AppLayout() {
   const { user, logout } = useAuth();
+  const { canCreateConsultation } = usePermissions();
   const navigate = useNavigate();
 
   function handleLogout() {
@@ -26,12 +28,14 @@ export function AppLayout() {
           <NavLink to="/" end className={({ isActive }) => (isActive ? 'active' : '')}>
             Pacientes
           </NavLink>
-          <NavLink
-            to="/consultations"
-            className={({ isActive }) => (isActive ? 'active' : '')}
-          >
-            Consultas
-          </NavLink>
+          {canCreateConsultation() && (
+            <NavLink
+              to="/consultations"
+              className={({ isActive }) => (isActive ? 'active' : '')}
+            >
+              Consultas
+            </NavLink>
+          )}
           <NavLink
             to="/appointments"
             className={({ isActive }) => (isActive ? 'active' : '')}
@@ -57,7 +61,7 @@ export function AppLayout() {
       </main>
 
       <footer className="app-footer">
-        <p>Sistema de Gestión Clínica Óptica — Fase 3A</p>
+        <p>Sistema de Gestión Clínica Óptica — Fase 4A</p>
       </footer>
     </div>
   );

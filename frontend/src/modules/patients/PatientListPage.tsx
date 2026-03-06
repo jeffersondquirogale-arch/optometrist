@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { patientsApi, Patient } from '../../services/api';
+import { usePermissions } from '../auth/usePermissions';
 
 export function PatientListPage() {
   const [search, setSearch] = useState('');
+  const { canCreatePatient, canCreateConsultation, canViewClinicalHistory, canViewEvolution } = usePermissions();
 
   const { data: patients, isLoading, error } = useQuery<Patient[]>({
     queryKey: ['patients'],
@@ -28,9 +30,11 @@ export function PatientListPage() {
     <div>
       <div className="flex items-center justify-between mb-3">
         <h2 className="page-title">Listado de Pacientes</h2>
-        <Link to="/patients/new" className="btn btn-primary">
-          + Nuevo Paciente
-        </Link>
+        {canCreatePatient() && (
+          <Link to="/patients/new" className="btn btn-primary">
+            + Nuevo Paciente
+          </Link>
+        )}
       </div>
 
       {error && (
@@ -86,30 +90,36 @@ export function PatientListPage() {
                         >
                           👤 Detalle
                         </Link>
-                        <Link
-                          to={`/patients/${patient.id}/history`}
-                          className="btn btn-secondary"
-                          style={{ fontSize: '0.8rem', padding: '0.3rem 0.7rem' }}
-                          title="Ver historial de consultas"
-                        >
-                          📋 Historial
-                        </Link>
-                        <Link
-                          to={`/patients/${patient.id}/evolution`}
-                          className="btn btn-secondary"
-                          style={{ fontSize: '0.8rem', padding: '0.3rem 0.7rem' }}
-                          title="Ver evolución clínica"
-                        >
-                          📈 Evolución
-                        </Link>
-                        <Link
-                          to={`/consultations/new?patientId=${patient.id}`}
-                          className="btn btn-primary"
-                          style={{ fontSize: '0.8rem', padding: '0.3rem 0.7rem' }}
-                          title="Crear nueva consulta"
-                        >
-                          + Consulta
-                        </Link>
+                        {canViewClinicalHistory() && (
+                          <Link
+                            to={`/patients/${patient.id}/history`}
+                            className="btn btn-secondary"
+                            style={{ fontSize: '0.8rem', padding: '0.3rem 0.7rem' }}
+                            title="Ver historial de consultas"
+                          >
+                            📋 Historial
+                          </Link>
+                        )}
+                        {canViewEvolution() && (
+                          <Link
+                            to={`/patients/${patient.id}/evolution`}
+                            className="btn btn-secondary"
+                            style={{ fontSize: '0.8rem', padding: '0.3rem 0.7rem' }}
+                            title="Ver evolución clínica"
+                          >
+                            📈 Evolución
+                          </Link>
+                        )}
+                        {canCreateConsultation() && (
+                          <Link
+                            to={`/consultations/new?patientId=${patient.id}`}
+                            className="btn btn-primary"
+                            style={{ fontSize: '0.8rem', padding: '0.3rem 0.7rem' }}
+                            title="Crear nueva consulta"
+                          >
+                            + Consulta
+                          </Link>
+                        )}
                       </div>
                     </td>
                   </tr>

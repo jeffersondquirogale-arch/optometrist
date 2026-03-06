@@ -1,6 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { consultationsApi, Consultation } from '../../services/api';
+import { usePermissions } from '../auth/usePermissions';
 
 function formatDate(dateStr?: string) {
   if (!dateStr) return '—';
@@ -50,6 +51,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 
 export function ConsultationDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const { canEditConsultation, canPrintConsultation } = usePermissions();
 
   const {
     data: consultation,
@@ -76,12 +78,16 @@ export function ConsultationDetailPage() {
           <Link to={`/patients/${patient.id}/history`} className="btn btn-secondary">
             ← Historial del paciente
           </Link>
-          <Link to={`/consultations/${id}/edit`} className="btn btn-secondary">
-            ✏️ Editar
-          </Link>
-          <Link to={`/print/consultations/${id}`} className="btn btn-primary" target="_blank">
-            🖨️ Imprimir
-          </Link>
+          {canEditConsultation() && (
+            <Link to={`/consultations/${id}/edit`} className="btn btn-secondary">
+              ✏️ Editar
+            </Link>
+          )}
+          {canPrintConsultation() && (
+            <Link to={`/print/consultations/${id}`} className="btn btn-primary" target="_blank">
+              🖨️ Imprimir
+            </Link>
+          )}
         </div>
       </div>
 

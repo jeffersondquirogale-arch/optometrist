@@ -80,17 +80,46 @@ const emptyForm: CreateConsultationInput = {
   control: '',
   observations: '',
   paymentStatus: 'PENDIENTE',
-  lensometry: { odSphere: undefined, odCylinder: undefined, odAxis: undefined, odAdd: undefined, oiSphere: undefined, oiCylinder: undefined, oiAxis: undefined, oiAdd: undefined, notes: '' },
-  visualAcuity: { odScVision: '', oiScVision: '', odCcVision: '', oiCcVision: '', nearVision: '', colorVision: '', iop: '', notes: '' },
-  ocularMotility: { versions: '', ductions: '', coverTest: '', hirschberg: '', npc: '', notes: '' },
-  externalExam: { eyelids: '', conjunctiva: '', cornea: '', iris: '', pupil: '', lens: '', fundus: '', notes: '' },
+  lensometry: {
+    odSphere: undefined, odCylinder: undefined, odAxis: undefined, odAdd: undefined,
+    oiSphere: undefined, oiCylinder: undefined, oiAxis: undefined, oiAdd: undefined,
+    notes: '',
+  },
+  visualAcuity: {
+    odScVision: '', oiScVision: '',
+    odCcVision: '', oiCcVision: '',
+    nearVision: '', colorVision: '', iop: '', notes: '',
+  },
+  ocularMotility: {
+    versions: '', ductions: '', coverTest: '', hirschberg: '', npc: '', notes: '',
+  },
+  externalExam: {
+    eyelids: '', conjunctiva: '', cornea: '', iris: '', pupil: '', lens: '', fundus: '', notes: '',
+  },
   cftaMoscopia: { campimetry: '', tonometry: '', ascan: '', floaters: '', notes: '' },
-  keratometry: { odK1: undefined, odK1Axis: undefined, odK2: undefined, odK2Axis: undefined, oiK1: undefined, oiK1Axis: undefined, oiK2: undefined, oiK2Axis: undefined, notes: '' },
+  keratometry: {
+    odK1: undefined, odK1Axis: undefined, odK2: undefined, odK2Axis: undefined,
+    oiK1: undefined, oiK1Axis: undefined, oiK2: undefined, oiK2Axis: undefined,
+    notes: '',
+  },
   colorTest: { odResult: '', oiResult: '', testType: '', notes: '' },
   stereopsisTest: { result: '', testType: '', seconds: undefined, notes: '' },
-  refraction: { odSphere: undefined, odCylinder: undefined, odAxis: undefined, oiSphere: undefined, oiCylinder: undefined, oiAxis: undefined, notes: '' },
-  subjectiveRefraction: { odSphere: undefined, odCylinder: undefined, odAxis: undefined, odAdd: undefined, odVision: '', oiSphere: undefined, oiCylinder: undefined, oiAxis: undefined, oiAdd: undefined, oiVision: '', notes: '' },
-  finalFormula: { odSphere: undefined, odCylinder: undefined, odAxis: undefined, odAdd: undefined, odPrism: '', oiSphere: undefined, oiCylinder: undefined, oiAxis: undefined, oiAdd: undefined, oiPrism: '', lensType: '', lensMaterial: '', lensCoating: '', dpOd: undefined, dpOi: undefined, notes: '' },
+  refraction: {
+    odSphere: undefined, odCylinder: undefined, odAxis: undefined,
+    oiSphere: undefined, oiCylinder: undefined, oiAxis: undefined,
+    notes: '',
+  },
+  subjectiveRefraction: {
+    odSphere: undefined, odCylinder: undefined, odAxis: undefined, odAdd: undefined, odVision: '',
+    oiSphere: undefined, oiCylinder: undefined, oiAxis: undefined, oiAdd: undefined, oiVision: '',
+    notes: '',
+  },
+  finalFormula: {
+    odSphere: undefined, odCylinder: undefined, odAxis: undefined, odAdd: undefined, odPrism: '',
+    oiSphere: undefined, oiCylinder: undefined, oiAxis: undefined, oiAdd: undefined, oiPrism: '',
+    lensType: '', lensMaterial: '', lensCoating: '',
+    dpOd: undefined, dpOi: undefined, notes: '',
+  },
 };
 
 function consultationToForm(c: Consultation): CreateConsultationInput {

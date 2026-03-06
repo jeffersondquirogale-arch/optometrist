@@ -1,5 +1,8 @@
 # Sistema de Gestión Clínica Óptica
 
+> **Fase 5A — Fidelidad de impresión clínica y pulido avanzado de PDF**  
+> La Fase 5A eleva la ficha de consulta imprimible de un borrador funcional a una experiencia de impresión de grado clínico, comparable a un formulario de papel de optometría real. Las mejoras incluyen: diseño más denso en A4 con márgenes optimizados, secciones con encabezados más compactos y nítidos, tablas OD/OI con anchos de columna fijos (`table-layout: fixed`) para alineación perfecta, agrupación en tres columnas para Motilidad Ocular / Examen Externo / CFTA Moscopia, área de firma y sello estructurada, campos de texto libre renderizados como líneas de formulario físico, manejo robusto de consultas parciales (secciones vacías mantienen el formulario estable), botón *Volver* en la barra de acción y reglas `@media print` reforzadas con `print-color-adjust: exact` para impresión fiel en color.
+
 > **Fase 4D — Dashboard y reportes operacionales**  
 > La Fase 4D agrega un dashboard principal de bienvenida que se convierte en la pantalla de inicio después del login. Incluye tarjetas de resumen, citas de hoy, próximas citas, pacientes y consultas recientes, resumen de citas por estado y accesos rápidos adaptados al rol del usuario. El backend expone cinco nuevos endpoints de dashboard bajo `/api/dashboard`.
 >
@@ -510,6 +513,59 @@ La Fase 3C mejora la usabilidad operativa diaria del sistema con:
 - **Estados vacíos informativos**: Mensajes de vacío contextuales en todas las páginas, diferenciando "sin datos" de "sin resultados para el filtro"
 - **Navegación simplificada**: La barra de navegación expone directamente Pacientes, Consultas y Citas
 - **Backend con parámetros de filtrado**: Los endpoints `/api/patients`, `/api/consultations` y `/api/appointments` aceptan parámetros de búsqueda y filtro
+
+---
+
+## Notas de la Fase 5A — Impresión clínica de grado profesional
+
+La Fase 5A perfecciona la ficha de consulta imprimible para que se asemeje a un formulario físico de optometría real:
+
+### Layout A4 optimizado
+
+- Márgenes reducidos a `10mm 12mm 12mm 14mm` (via `@page`) para maximizar el área útil.
+- La clase `.print-page` ahora tiene un ancho calculado de `182mm` y padding interior de `4mm 6mm`, eliminando el espacio desperdiciado de versiones anteriores.
+- Todas las secciones usan `break-inside: avoid` (con el alias `page-break-inside: avoid` para compatibilidad amplia) para evitar cortes de página dentro de un bloque clínico.
+
+### Tablas OD/OI con anchos fijos
+
+- Las tablas de Lensometría, Queratometría, Refracción Objetiva, Refracción Subjetiva y Fórmula Final usan `table-layout: fixed` con anchos de columna explícitos, eliminando el riesgo de columnas desalineadas cuando los datos son escasos.
+- El nuevo sub-componente `<EyeTable>` encapsula este patrón reutilizablemente, recibiendo definiciones de columna, celdas OD, celdas OI y una celda de notas opcional con `rowSpan`.
+
+### Agrupación en tres columnas
+
+- Motilidad Ocular, Examen Externo y CFTA/Moscopia ahora se renderizan en una grilla de **tres columnas** (`.print-three-col`), reduciendo la altura total de esa región significativamente.
+- Fondo de ojo se extrae a su propia sección compacta solo cuando tiene valor.
+- Diagnóstico y Tratamiento Indicado comparten una fila de **dos columnas** para reducir la altura del bloque final.
+
+### Campos de texto libre tipo formulario físico
+
+- El componente `<FormLines>` reemplaza el `<div className="print-textarea">` con una serie de líneas subrayadas que imitan el papel rayado de un formulario médico.
+- Si el campo está vacío, se renderizan líneas en blanco (mínimo configurable), de modo que el formulario nunca colapsa aunque no haya datos.
+- El texto con saltos de línea se divide en líneas individuales.
+
+### Área de firma y sello mejorada
+
+- La firma se ubica en una grilla de dos columnas: a la izquierda aparece la nota del pie de página; a la derecha, el bloque de firma con un área reservada para el sello (borde punteado), la línea de firma, el nombre del profesional y la matrícula.
+- Esto es más cercano a la distribución habitual de los formularios médicos en papel.
+
+### Reglas de impresión reforzadas
+
+- Se agregó `print-color-adjust: exact` (y su prefijo `-webkit-`) para que los fondos de color de los encabezados de sección y las etiquetas de tabla se impriman correctamente en todos los navegadores.
+- El botón **Volver** está disponible en la barra de acción en pantalla y oculto al imprimir.
+
+### Notas sobre comportamiento de impresión / PDF
+
+- **Navegadores recomendados**: Chrome y Edge producen los resultados más fieles. Firefox puede diferir ligeramente en el manejo de fondos.
+- **Longitud de contenido**: la ficha está diseñada para caber en **una página A4** en el caso típico. Si los campos de diagnóstico, tratamiento u observaciones contienen texto extenso (más de 3–4 líneas), el formulario puede desbordarse a una segunda página — esto es comportamiento esperado y se degrada limpiamente.
+- **Configuración de impresión**: desactivar los encabezados y pies de página del navegador (en el diálogo de impresión) produce el resultado más limpio.
+- **Guardado como PDF**: usar "Guardar como PDF" desde el diálogo de impresión del navegador es el método recomendado; no se requiere ningún software adicional.
+
+### Archivos afectados
+
+| Archivo | Cambios |
+|---|---|
+| `frontend/src/styles/print.css` | Márgenes, padding, tablas fijas, tres columnas, firma, líneas de formulario, `@media print` reforzado |
+| `frontend/src/modules/print-template/PrintConsultationPage.tsx` | Componentes `EyeTable` y `FormLines`, nuevo layout de tres columnas, firma reestructurada, botón Volver, pie de página 5A |
 
 ---
 

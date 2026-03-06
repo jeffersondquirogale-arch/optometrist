@@ -252,3 +252,14 @@ tr:hover td {
 .gap-2 { gap: 1rem; }
 .items-center { align-items: center; }
 .justify-between { justify-content: space-between; }
+
+/* ─── Navegación lateral de consulta ─────────────────────────────────────── */
+.cf-nav-btn:hover:not([data-active='true']) {
+  background-color: #e8eef6 !important;
+  color: #1a3a5c !important;
+}
+
+.cf-nav-btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}

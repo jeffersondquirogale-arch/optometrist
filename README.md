@@ -1,7 +1,10 @@
 # Sistema de Gestión Clínica Óptica
 
-> **Fase 2 — Consultas clínicas ricas, historial, evolución e impresión dinámica**  
-> La Fase 1 estableció el bootstrap inicial. La Fase 2 convierte el sistema en una herramienta clínicamente útil: consultas con múltiples secciones oftalmológicas, historial por paciente, evolución longitudinal de la fórmula y agudeza visual, y una ficha de impresión dinámica en A4.
+> **Fase 3B — Mejora de la consulta clínica y fidelidad de impresión**  
+> La Fase 3B refina el formulario de consulta multisección con navegación lateral sticky y diseño simétrico OD/OI, y actualiza la ficha de impresión A4 para que se parezca más a un formulario clínico real, con todas las secciones oftalmológicas y tipografía y estructura propias de un documento médico.
+>
+> La Fase 2 convirtió el sistema en una herramienta clínicamente útil: consultas con múltiples secciones oftalmológicas, historial por paciente, evolución longitudinal de la fórmula y agudeza visual, y una ficha de impresión dinámica en A4.  
+> La Fase 1 estableció el bootstrap inicial.
 
 ---
 
@@ -206,6 +209,18 @@ El esquema Prisma incluye los siguientes modelos:
 - **ConsultationPathology** — Patologías registradas en la consulta
 - **MedicalNote** — Notas clínicas adicionales
 - **PatientPathology** — Patologías crónicas del paciente
+
+---
+
+## Notas de la Fase 3B
+
+La Fase 3B mejora la experiencia clínica con:
+
+- **Navegación lateral sticky** en el formulario de consulta, con íconos por sección para acceso rápido sin perder el contexto
+- **Tablas simétricas OD / OI** en lensometría, agudeza visual, queratometría, refracción objetiva, subjetiva y fórmula final — los valores de cada ojo quedan uno al lado del otro para comparación inmediata
+- **Ficha de impresión A4 completa**: ahora incluye todas las secciones clínicas (motilidad ocular, examen externo, CFTA/moscopia, queratometría, test de color, estereopsis, refracción objetiva, subjetivo), con encabezado clínico en tres columnas, colores diferenciados OD/OI, y mejor estructura de firma y sello
+- **CSS de impresión refinado** con layout de dos columnas para secciones pequeñas, jerarquía visual más clara, y soporte mejorado de `@page` / `@media print`
+- **Pie de página actualizado** que indica la versión del sistema (Fase 3B)
 
 ---
 

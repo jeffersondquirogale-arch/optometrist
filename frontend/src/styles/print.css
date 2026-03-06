@@ -1,198 +1,340 @@
-/* ─── Estilos para impresión clínica — Formato A4 ─────────────────────────── */
+/* ─── Estilos para impresión clínica — Formato A4 (Fase 3B) ─────────────── */
 
-/* Ocultar elementos de navegación al imprimir */
-@media print {
-  .app-header,
-  .app-footer,
-  .app-nav,
-  .btn,
-  .no-print {
-    display: none !important;
-  }
-
-  body {
-    background: white;
-    font-family: 'Times New Roman', Times, serif;
-    font-size: 11pt;
-    color: #000;
-  }
-
-  .print-page {
-    margin: 0;
-    padding: 0;
-  }
-}
-
-/* Configuración de página A4 */
+/* ─── @page ──────────────────────────────────────────────────────────────── */
 @page {
   size: A4 portrait;
-  margin: 15mm 15mm 15mm 20mm;
+  margin: 12mm 14mm 14mm 18mm;
 }
 
-/* ─── Estructura del formulario clínico ──────────────────────────────────── */
+/* ─── Estructura base de la página ──────────────────────────────────────── */
 .print-page {
   width: 210mm;
   min-height: 297mm;
   margin: 0 auto;
-  padding: 10mm;
+  padding: 8mm 10mm;
   background: white;
   font-family: 'Times New Roman', Times, serif;
-  font-size: 11pt;
+  font-size: 10pt;
   color: #000;
   box-sizing: border-box;
 }
 
-/* Encabezado de la clínica */
+/* ─── Encabezado clínica / doctor ────────────────────────────────────────── */
 .print-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  border-bottom: 2px solid #000;
-  padding-bottom: 6mm;
-  margin-bottom: 5mm;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: start;
+  gap: 4mm;
+  border-bottom: 2.5px double #000;
+  padding-bottom: 4mm;
+  margin-bottom: 4mm;
 }
 
-.print-header__clinic h1 {
-  font-size: 16pt;
+.print-header__clinic-name {
+  font-size: 13pt;
   font-weight: bold;
-  margin-bottom: 2mm;
+  margin-bottom: 1.5mm;
 }
 
-.print-header__clinic p {
-  font-size: 9pt;
+.print-header__clinic-detail {
+  font-size: 8.5pt;
   color: #333;
-  margin-bottom: 1mm;
+  margin-bottom: 0.8mm;
+}
+
+.print-header__center {
+  text-align: center;
+}
+
+.print-doc-title {
+  font-size: 11pt;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border: 2px solid #000;
+  padding: 1.5mm 3mm;
+  margin-bottom: 2mm;
+  white-space: nowrap;
+}
+
+.print-header__date-box {
+  font-size: 8.5pt;
+  margin-top: 1mm;
+}
+
+.print-header__date-value {
+  font-weight: bold;
 }
 
 .print-header__doctor {
   text-align: right;
-  font-size: 9pt;
 }
 
-.print-header__doctor strong {
-  display: block;
+.print-header__doctor-name {
   font-size: 11pt;
-  margin-bottom: 2mm;
+  font-weight: bold;
+  margin-bottom: 1.5mm;
 }
 
-/* Título del documento */
-.print-doc-title {
-  text-align: center;
-  font-size: 13pt;
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border: 2px solid #000;
-  padding: 2mm 4mm;
-  margin-bottom: 5mm;
+.print-header__doctor-detail {
+  font-size: 8.5pt;
+  color: #333;
+  margin-bottom: 0.8mm;
+}
+
+/* ─── Grilla de datos del paciente ───────────────────────────────────────── */
+.print-patient-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 2mm 4mm;
+}
+
+.print-field--wide {
+  grid-column: span 1;
+}
+
+.print-field--full {
+  grid-column: 1 / -1;
 }
 
 /* ─── Secciones del formulario ───────────────────────────────────────────── */
 .print-section {
   border: 1px solid #000;
-  margin-bottom: 4mm;
+  margin-bottom: 3mm;
   page-break-inside: avoid;
 }
 
+.print-section--highlight {
+  border-width: 2px;
+}
+
 .print-section__title {
-  background-color: #ddd;
-  font-size: 10pt;
+  background-color: #d0d0d0;
+  font-size: 8.5pt;
   font-weight: bold;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  padding: 1mm 3mm;
+  letter-spacing: 0.05em;
+  padding: 0.8mm 3mm;
   border-bottom: 1px solid #000;
 }
 
+.print-section--highlight .print-section__title {
+  background-color: #b0b8c8;
+}
+
 .print-section__body {
-  padding: 3mm 4mm;
+  padding: 2.5mm 3mm;
+}
+
+/* ─── Dos columnas (para secciones pequeñas en paralelo) ─────────────────── */
+.print-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 3mm;
+  margin-bottom: 3mm;
+}
+
+.print-two-col .print-section {
+  margin-bottom: 0;
 }
 
 /* ─── Campos de datos ────────────────────────────────────────────────────── */
 .print-field-row {
   display: flex;
-  gap: 5mm;
+  gap: 4mm;
   margin-bottom: 2mm;
   flex-wrap: wrap;
 }
 
 .print-field {
   flex: 1;
-  min-width: 60mm;
+  min-width: 50mm;
 }
 
 .print-field__label {
-  font-size: 8pt;
+  font-size: 7.5pt;
   font-weight: bold;
   text-transform: uppercase;
   color: #444;
   margin-bottom: 0.5mm;
+  letter-spacing: 0.03em;
 }
 
 .print-field__value {
   border-bottom: 1px solid #555;
-  min-height: 6mm;
-  font-size: 10pt;
-  padding-bottom: 0.5mm;
+  min-height: 5.5mm;
+  font-size: 9.5pt;
+  padding: 0.3mm 0 0.3mm 0;
 }
 
 /* Campos de texto libre (diagnóstico, tratamiento, etc.) */
 .print-textarea {
-  border: 1px solid #555;
-  min-height: 18mm;
+  border: 1px solid #888;
+  min-height: 14mm;
   width: 100%;
-  padding: 1mm 2mm;
-  font-size: 10pt;
+  padding: 1.5mm 2mm;
+  font-size: 9.5pt;
+  font-family: inherit;
 }
 
-/* ─── Tabla de refracción ─────────────────────────────────────────────────── */
+/* Notas inline bajo tablas */
+.print-notes {
+  margin-top: 1.5mm;
+  font-size: 8pt;
+  color: #444;
+  font-style: italic;
+  border-left: 2px solid #aaa;
+  padding-left: 2mm;
+}
+
+/* ─── Tablas clínicas ────────────────────────────────────────────────────── */
 .print-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 9pt;
+  font-size: 8.5pt;
 }
 
 .print-table th,
 .print-table td {
   border: 1px solid #000;
-  padding: 1.5mm 2mm;
+  padding: 1mm 2mm;
   text-align: center;
+  vertical-align: middle;
 }
 
 .print-table th {
-  background-color: #eee;
+  background-color: #e8e8e8;
   font-weight: bold;
-  font-size: 8pt;
+  font-size: 7.5pt;
   text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
-.print-table .eye-label {
-  font-weight: bold;
+/* Tabla compacta (clave-valor) */
+.print-table--compact th {
   text-align: left;
-  padding-left: 3mm;
+  background-color: #f0f0f0;
+  width: 28%;
+  font-size: 7.5pt;
 }
 
-/* ─── Sección de firma ───────────────────────────────────────────────────── */
-.print-signature {
+.print-table--compact td {
+  text-align: left;
+  font-size: 8.5pt;
+}
+
+/* Etiqueta OD / OI */
+.eye-label {
+  font-weight: bold;
+  font-size: 9pt;
+  text-align: left !important;
+  padding-left: 2.5mm !important;
+  white-space: nowrap;
+}
+
+.eye-od {
+  color: #003380;
+}
+
+.eye-oi {
+  color: #800000;
+}
+
+/* Celda de notas con rowspan */
+.notes-cell {
+  text-align: left !important;
+  font-size: 8pt;
+  color: #333;
+  vertical-align: top;
+}
+
+/* ─── Firma y sello ───────────────────────────────────────────────────────── */
+.print-signature-row {
   display: flex;
   justify-content: flex-end;
-  margin-top: 10mm;
+  margin-top: 8mm;
+  margin-bottom: 4mm;
 }
 
 .print-signature__box {
-  border-top: 1px solid #000;
-  min-width: 70mm;
+  min-width: 65mm;
   text-align: center;
-  padding-top: 2mm;
+}
+
+.print-signature__line {
+  border-top: 1px solid #000;
+  margin-bottom: 1.5mm;
+}
+
+.print-signature__caption {
+  font-size: 8pt;
+  color: #333;
+  margin-bottom: 1mm;
+}
+
+.print-signature__name {
   font-size: 9pt;
+  font-weight: bold;
+}
+
+.print-signature__mat {
+  font-size: 8pt;
+  color: #444;
 }
 
 /* ─── Pie de página ──────────────────────────────────────────────────────── */
 .print-footer {
-  margin-top: 5mm;
+  margin-top: 3mm;
   border-top: 1px solid #aaa;
-  padding-top: 2mm;
-  font-size: 8pt;
-  color: #555;
+  padding-top: 1.5mm;
+  font-size: 7.5pt;
+  color: #666;
   text-align: center;
 }
+
+/* ─── Barra de acción (solo pantalla) ────────────────────────────────────── */
+.print-action-bar {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: #f5f7fa;
+  border-top: 1px solid #dde1e7;
+  margin-top: 1rem;
+}
+
+/* ─── @media print ───────────────────────────────────────────────────────── */
+@media print {
+  .app-header,
+  .app-footer,
+  .app-nav,
+  .btn,
+  .no-print,
+  .print-action-bar {
+    display: none !important;
+  }
+
+  body {
+    background: white;
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 10pt;
+    color: #000;
+  }
+
+  .print-page {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+  }
+
+  .print-two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .print-section {
+    page-break-inside: avoid;
+  }
+}
+

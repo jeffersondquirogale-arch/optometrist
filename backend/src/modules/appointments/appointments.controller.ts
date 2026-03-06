@@ -3,8 +3,11 @@ import * as appointmentsService from './appointments.service';
 import { createAppointmentSchema } from './appointments.dto';
 import { AppError } from '../../middlewares/error.middleware';
 
-export async function getAll(_req: Request, res: Response) {
-  const appointments = await appointmentsService.getAllAppointments();
+export async function getAll(req: Request, res: Response) {
+  const status = typeof req.query.status === 'string' ? req.query.status : undefined;
+  const dateFrom = typeof req.query.dateFrom === 'string' ? req.query.dateFrom : undefined;
+  const dateTo = typeof req.query.dateTo === 'string' ? req.query.dateTo : undefined;
+  const appointments = await appointmentsService.getAllAppointments({ status, dateFrom, dateTo });
   res.json({ data: appointments });
 }
 

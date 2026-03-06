@@ -22,8 +22,9 @@ const fullConsultationInclude = {
   medicalNotes: true,
 } as const;
 
-export async function getAllConsultations() {
+export async function getAllConsultations(patientId?: string) {
   return prisma.consultation.findMany({
+    where: patientId ? { patientId } : undefined,
     include: {
       patient: true,
       doctor: { include: { user: { select: { name: true } } } },

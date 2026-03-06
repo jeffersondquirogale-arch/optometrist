@@ -3,8 +3,9 @@ import * as consultationsService from './consultations.service';
 import { createConsultationSchema } from './consultations.dto';
 import { AppError } from '../../middlewares/error.middleware';
 
-export async function getAll(_req: Request, res: Response) {
-  const consultations = await consultationsService.getAllConsultations();
+export async function getAll(req: Request, res: Response) {
+  const patientId = typeof req.query.patientId === 'string' ? req.query.patientId : undefined;
+  const consultations = await consultationsService.getAllConsultations(patientId);
   res.json({ data: consultations });
 }
 

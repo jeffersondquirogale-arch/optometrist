@@ -98,6 +98,13 @@ export function PatientHistoryPage() {
                           Ver
                         </Link>
                         <Link
+                          to={`/consultations/${c.id}/edit`}
+                          className="btn btn-secondary"
+                          style={{ fontSize: '0.8rem', padding: '0.3rem 0.7rem' }}
+                        >
+                          ✏️ Editar
+                        </Link>
+                        <Link
                           to={`/print/consultations/${c.id}`}
                           className="btn btn-secondary"
                           style={{ fontSize: '0.8rem', padding: '0.3rem 0.7rem' }}

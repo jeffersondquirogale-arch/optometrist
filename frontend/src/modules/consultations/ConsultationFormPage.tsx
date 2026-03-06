@@ -159,7 +159,7 @@ export function ConsultationFormPage({ mode }: { mode: 'new' | 'edit' }) {
 
   const { data: patients } = useQuery({
     queryKey: ['patients'],
-    queryFn: patientsApi.getAll,
+    queryFn: () => patientsApi.getAll(),
   });
 
   const { data: existingConsultation } = useQuery<Consultation>({

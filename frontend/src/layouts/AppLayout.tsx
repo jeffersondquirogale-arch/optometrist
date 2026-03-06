@@ -12,16 +12,10 @@ export function AppLayout() {
             Pacientes
           </NavLink>
           <NavLink
-            to="/patients/new"
+            to="/consultations"
             className={({ isActive }) => (isActive ? 'active' : '')}
           >
-            Nuevo Paciente
-          </NavLink>
-          <NavLink
-            to="/consultations/new"
-            className={({ isActive }) => (isActive ? 'active' : '')}
-          >
-            Nueva Consulta
+            Consultas
           </NavLink>
           <NavLink
             to="/appointments"
@@ -37,7 +31,7 @@ export function AppLayout() {
       </main>
 
       <footer className="app-footer">
-        <p>Sistema de Gestión Clínica Óptica — Fase 2</p>
+        <p>Sistema de Gestión Clínica Óptica — Fase 3C</p>
       </footer>
     </div>
   );

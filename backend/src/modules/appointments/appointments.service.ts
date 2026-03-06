@@ -2,8 +2,23 @@ import { prisma } from '../../config/prisma';
 import { AppError } from '../../middlewares/error.middleware';
 import { CreateAppointmentDto } from './appointments.dto';
 
-export async function getAllAppointments() {
+export async function getAllAppointments(filters?: { status?: string; dateFrom?: string; dateTo?: string }) {
+  const where: Record<string, unknown> = {};
+  if (filters?.status) {
+    where.status = filters.status;
+  }
+  if (filters?.dateFrom || filters?.dateTo) {
+    const dateFilter: Record<string, Date> = {};
+    if (filters.dateFrom) dateFilter.gte = new Date(filters.dateFrom);
+    if (filters.dateTo) {
+      const to = new Date(filters.dateTo);
+      to.setHours(23, 59, 59, 999);
+      dateFilter.lte = to;
+    }
+    where.scheduledAt = dateFilter;
+  }
   return prisma.appointment.findMany({
+    where,
     include: { patient: true },
     orderBy: { scheduledAt: 'desc' },
   });

@@ -1,12 +1,28 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { patientsApi, Patient } from '../../services/api';
 
 export function PatientListPage() {
+  const [search, setSearch] = useState('');
+
   const { data: patients, isLoading, error } = useQuery<Patient[]>({
     queryKey: ['patients'],
-    queryFn: patientsApi.getAll,
+    queryFn: () => patientsApi.getAll(),
   });
+
+  const filtered = patients
+    ? patients.filter((p) => {
+        if (!search.trim()) return true;
+        const term = search.trim().toLowerCase();
+        return (
+          p.firstName.toLowerCase().includes(term) ||
+          p.lastName.toLowerCase().includes(term) ||
+          (p.documentId ?? '').toLowerCase().includes(term) ||
+          (p.phone ?? '').toLowerCase().includes(term)
+        );
+      })
+    : [];
 
   return (
     <div>
@@ -24,9 +40,20 @@ export function PatientListPage() {
       )}
 
       <div className="card">
+        <div className="form-group" style={{ marginBottom: '1rem' }}>
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Buscar por nombre, apellido, documento o teléfono…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ maxWidth: '420px' }}
+          />
+        </div>
+
         {isLoading ? (
           <p className="text-muted">Cargando pacientes...</p>
-        ) : patients && patients.length > 0 ? (
+        ) : filtered.length > 0 ? (
           <div className="table-wrapper">
             <table>
               <thead>
@@ -39,7 +66,7 @@ export function PatientListPage() {
                 </tr>
               </thead>
               <tbody>
-                {patients.map((patient) => (
+                {filtered.map((patient) => (
                   <tr key={patient.id}>
                     <td>
                       <Link to={`/patients/${patient.id}`} style={{ color: '#2563eb' }}>
@@ -50,20 +77,38 @@ export function PatientListPage() {
                     <td>{patient.phone ?? '—'}</td>
                     <td>{patient.email ?? '—'}</td>
                     <td>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2" style={{ flexWrap: 'wrap' }}>
+                        <Link
+                          to={`/patients/${patient.id}`}
+                          className="btn btn-secondary"
+                          style={{ fontSize: '0.8rem', padding: '0.3rem 0.7rem' }}
+                          title="Ver datos del paciente"
+                        >
+                          👤 Detalle
+                        </Link>
                         <Link
                           to={`/patients/${patient.id}/history`}
                           className="btn btn-secondary"
                           style={{ fontSize: '0.8rem', padding: '0.3rem 0.7rem' }}
+                          title="Ver historial de consultas"
                         >
-                          Historial
+                          📋 Historial
+                        </Link>
+                        <Link
+                          to={`/patients/${patient.id}/evolution`}
+                          className="btn btn-secondary"
+                          style={{ fontSize: '0.8rem', padding: '0.3rem 0.7rem' }}
+                          title="Ver evolución clínica"
+                        >
+                          📈 Evolución
                         </Link>
                         <Link
                           to={`/consultations/new?patientId=${patient.id}`}
-                          className="btn btn-secondary"
+                          className="btn btn-primary"
                           style={{ fontSize: '0.8rem', padding: '0.3rem 0.7rem' }}
+                          title="Crear nueva consulta"
                         >
-                          Nueva consulta
+                          + Consulta
                         </Link>
                       </div>
                     </td>
@@ -72,8 +117,10 @@ export function PatientListPage() {
               </tbody>
             </table>
           </div>
+        ) : patients && patients.length === 0 ? (
+          <p className="text-muted">No hay pacientes registrados aún. Cree el primer paciente usando el botón de arriba.</p>
         ) : (
-          <p className="text-muted">No hay pacientes registrados aún.</p>
+          <p className="text-muted">No se encontraron pacientes con el criterio de búsqueda.</p>
         )}
       </div>
     </div>

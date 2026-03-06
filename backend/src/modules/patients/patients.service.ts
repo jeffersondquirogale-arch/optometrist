@@ -2,9 +2,19 @@ import { prisma } from '../../config/prisma';
 import { AppError } from '../../middlewares/error.middleware';
 import { CreatePatientDto } from './patients.dto';
 
-export async function getAllPatients() {
+export async function getAllPatients(search?: string) {
+  const where: Record<string, unknown> = { active: true };
+  if (search && search.trim()) {
+    const term = search.trim();
+    where.OR = [
+      { firstName: { contains: term, mode: 'insensitive' } },
+      { lastName: { contains: term, mode: 'insensitive' } },
+      { documentId: { contains: term, mode: 'insensitive' } },
+      { phone: { contains: term, mode: 'insensitive' } },
+    ];
+  }
   return prisma.patient.findMany({
-    where: { active: true },
+    where,
     orderBy: { lastName: 'asc' },
   });
 }

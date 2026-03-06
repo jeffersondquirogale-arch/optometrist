@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import rateLimit from 'express-rate-limit';
 import { env } from './config/env';
 import { errorMiddleware } from './middlewares/error.middleware';
 import { notFoundMiddleware } from './middlewares/not-found.middleware';
@@ -26,21 +27,38 @@ app.use(morgan(env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// ─── Rate limiting ────────────────────────────────────────────────────────────
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { status: 'error', message: 'Demasiados intentos. Intente nuevamente en 15 minutos.' },
+});
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 500,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { status: 'error', message: 'Demasiadas solicitudes. Intente nuevamente más tarde.' },
+});
+
 // ─── Health check ─────────────────────────────────────────────────────────────
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // ─── Auth (rutas públicas) ────────────────────────────────────────────────────
-app.use('/api/auth', authRouter);
+app.use('/api/auth', authLimiter, authRouter);
 
 // ─── Rutas protegidas ─────────────────────────────────────────────────────────
-app.use('/api/patients', authMiddleware, patientsRouter);
-app.use('/api/doctors', authMiddleware, doctorsRouter);
-app.use('/api/consultations', authMiddleware, consultationsRouter);
-app.use('/api/appointments', authMiddleware, appointmentsRouter);
-app.use('/api/print', authMiddleware, printRouter);
-app.use('/api/charts', authMiddleware, chartsRouter);
+app.use('/api/patients', apiLimiter, authMiddleware, patientsRouter);
+app.use('/api/doctors', apiLimiter, authMiddleware, doctorsRouter);
+app.use('/api/consultations', apiLimiter, authMiddleware, consultationsRouter);
+app.use('/api/appointments', apiLimiter, authMiddleware, appointmentsRouter);
+app.use('/api/print', apiLimiter, authMiddleware, printRouter);
+app.use('/api/charts', apiLimiter, authMiddleware, chartsRouter);
 
 // ─── Middlewares de error ─────────────────────────────────────────────────────
 app.use(notFoundMiddleware);

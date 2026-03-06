@@ -7,6 +7,7 @@ import { PatientHistoryPage } from '../modules/patients/PatientHistoryPage';
 import { PatientEvolutionPage } from '../modules/patients/PatientEvolutionPage';
 import { ConsultationFormPage } from '../modules/consultations/ConsultationFormPage';
 import { ConsultationDetailPage } from '../modules/consultations/ConsultationDetailPage';
+import { ConsultationListPage } from '../modules/consultations/ConsultationListPage';
 import { AppointmentListPage } from '../modules/appointments/AppointmentListPage';
 import { PrintConsultationPage } from '../modules/print-template/PrintConsultationPage';
 
@@ -34,6 +35,10 @@ export const router = createBrowserRouter([
       {
         path: 'patients/:id/evolution',
         element: <PatientEvolutionPage />,
+      },
+      {
+        path: 'consultations',
+        element: <ConsultationListPage />,
       },
       {
         path: 'consultations/new',

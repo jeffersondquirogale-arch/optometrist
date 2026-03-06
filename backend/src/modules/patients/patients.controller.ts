@@ -3,8 +3,9 @@ import * as patientsService from './patients.service';
 import { createPatientSchema } from './patients.dto';
 import { AppError } from '../../middlewares/error.middleware';
 
-export async function getAll(_req: Request, res: Response) {
-  const patients = await patientsService.getAllPatients();
+export async function getAll(req: Request, res: Response) {
+  const search = typeof req.query.q === 'string' ? req.query.q : undefined;
+  const patients = await patientsService.getAllPatients(search);
   res.json({ data: patients });
 }
 

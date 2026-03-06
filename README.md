@@ -1,6 +1,8 @@
 # Sistema de Gestión Clínica Óptica
 
-> **Fase 3B — Mejora de la consulta clínica y fidelidad de impresión**  
+> **Fase 3C — Mejoras de usabilidad operativa**  
+> La Fase 3C mejora la usabilidad diaria del sistema: búsqueda y filtros en el listado de pacientes, nueva página de consultas con filtro por paciente, filtros de estado y fecha en citas, acciones rápidas mejoradas en tablas, feedback de éxito/error en formularios con mensajes inline, y estados vacíos más informativos.
+>
 > La Fase 3B refina el formulario de consulta multisección con navegación lateral sticky y diseño simétrico OD/OI, y actualiza la ficha de impresión A4 para que se parezca más a un formulario clínico real, con todas las secciones oftalmológicas y tipografía y estructura propias de un documento médico.
 >
 > La Fase 2 convirtió el sistema en una herramienta clínicamente útil: consultas con múltiples secciones oftalmológicas, historial por paciente, evolución longitudinal de la fórmula y agudeza visual, y una ficha de impresión dinámica en A4.  
@@ -131,20 +133,20 @@ El servidor estará disponible en `http://localhost:3000`.
 | Método | Ruta | Descripción |
 |---|---|---|
 | GET | `/api/health` | Estado del servidor |
-| GET | `/api/patients` | Listado de pacientes |
+| GET | `/api/patients` | Listado de pacientes (soporta `?q=` para búsqueda por nombre/documento/teléfono) |
 | GET | `/api/patients/:id` | Detalle de paciente |
 | POST | `/api/patients` | Crear paciente |
 | PATCH | `/api/patients/:id` | Actualizar paciente |
 | GET | `/api/doctors` | Listado de doctores |
 | POST | `/api/doctors` | Crear perfil de doctor |
-| GET | `/api/consultations` | Listado de consultas |
+| GET | `/api/consultations` | Listado de consultas (soporta `?patientId=` para filtrar por paciente) |
 | GET | `/api/consultations/:id` | Detalle de consulta |
 | POST | `/api/consultations` | Crear consulta (con datos clínicos anidados) |
 | PUT | `/api/consultations/:id` | Actualizar consulta |
 | GET | `/api/consultations/patient/:patientId/history` | Historial de consultas del paciente |
 | GET | `/api/consultations/patient/:patientId/evolution` | Serie evolutiva (fórmula + AV) |
 | GET | `/api/charts/patients/:patientId/evolution` | Evolución clínica (series longitudinales) |
-| GET | `/api/appointments` | Listado de citas |
+| GET | `/api/appointments` | Listado de citas (soporta `?status=`, `?dateFrom=`, `?dateTo=`) |
 | POST | `/api/appointments` | Crear cita |
 | PATCH | `/api/appointments/:id` | Actualizar cita |
 | GET | `/api/print/consultations/:id` | Datos de consulta para impresión dinámica |
@@ -168,15 +170,16 @@ La aplicación estará disponible en `http://localhost:5173`.
 
 | Ruta | Descripción |
 |---|---|
-| `/` | Listado de pacientes |
+| `/` | Listado de pacientes (con búsqueda por nombre/documento/teléfono) |
 | `/patients/new` | Crear nuevo paciente |
 | `/patients/:id` | Detalle del paciente |
 | `/patients/:id/history` | Historial de consultas del paciente |
 | `/patients/:id/evolution` | Evolución clínica longitudinal |
+| `/consultations` | Listado de consultas (con filtro por paciente y búsqueda) |
 | `/consultations/new` | Nueva consulta (formulario multisección) |
 | `/consultations/:id` | Detalle de consulta |
 | `/consultations/:id/edit` | Editar consulta |
-| `/appointments` | Listado y gestión de citas |
+| `/appointments` | Listado y gestión de citas (con filtros de estado y fecha) |
 | `/print/consultations/:id` | Ficha de consulta imprimible A4 (datos dinámicos) |
 
 ---
@@ -209,6 +212,23 @@ El esquema Prisma incluye los siguientes modelos:
 - **ConsultationPathology** — Patologías registradas en la consulta
 - **MedicalNote** — Notas clínicas adicionales
 - **PatientPathology** — Patologías crónicas del paciente
+
+---
+
+## Notas de la Fase 3C
+
+La Fase 3C mejora la usabilidad operativa diaria del sistema con:
+
+- **Búsqueda de pacientes**: El listado de pacientes incluye un campo de búsqueda instantánea por nombre, apellido, documento y teléfono
+- **Acciones rápidas en pacientes**: Cada fila del listado ahora expone botones directos para ver detalle, historial, evolución y crear una nueva consulta
+- **Nueva página de consultas** (`/consultations`): Listado centralizado de todas las consultas con filtro por paciente y búsqueda por motivo/diagnóstico, con acciones de Ver, Editar e Imprimir
+- **Filtros en citas**: La página de citas permite filtrar por estado y por rango de fechas (desde/hasta); se muestran badges de color por estado para lectura rápida
+- **Feedback de éxito**: Las acciones de crear o actualizar citas muestran un mensaje de confirmación temporal
+- **Validación inline en formularios**: Los formularios destacan campos con error con borde rojo y mensaje explicativo junto al campo
+- **Historial mejorado**: La tabla de historial del paciente incluye acceso directo a editar cada consulta
+- **Estados vacíos informativos**: Mensajes de vacío contextuales en todas las páginas, diferenciando "sin datos" de "sin resultados para el filtro"
+- **Navegación simplificada**: La barra de navegación expone directamente Pacientes, Consultas y Citas
+- **Backend con parámetros de filtrado**: Los endpoints `/api/patients`, `/api/consultations` y `/api/appointments` aceptan parámetros de búsqueda y filtro
 
 ---
 

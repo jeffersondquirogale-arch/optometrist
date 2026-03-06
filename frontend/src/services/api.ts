@@ -19,7 +19,10 @@ api.interceptors.response.use(
 
 // ─── Patients ─────────────────────────────────────────────────────────────────
 export const patientsApi = {
-  getAll: () => api.get<{ data: Patient[] }>('/patients').then((r) => r.data.data),
+  getAll: (search?: string) => {
+    const params = search ? { q: search } : {};
+    return api.get<{ data: Patient[] }>('/patients', { params }).then((r) => r.data.data);
+  },
   getById: (id: string) => api.get<{ data: Patient }>(`/patients/${id}`).then((r) => r.data.data),
   create: (data: CreatePatientInput) =>
     api.post<{ data: Patient }>('/patients', data).then((r) => r.data.data),
@@ -29,8 +32,10 @@ export const patientsApi = {
 
 // ─── Consultations ────────────────────────────────────────────────────────────
 export const consultationsApi = {
-  getAll: () =>
-    api.get<{ data: Consultation[] }>('/consultations').then((r) => r.data.data),
+  getAll: (patientId?: string) => {
+    const params = patientId ? { patientId } : {};
+    return api.get<{ data: Consultation[] }>('/consultations', { params }).then((r) => r.data.data);
+  },
   getById: (id: string) =>
     api.get<{ data: Consultation }>(`/consultations/${id}`).then((r) => r.data.data),
   create: (data: CreateConsultationInput) =>
@@ -49,8 +54,13 @@ export const consultationsApi = {
 
 // ─── Appointments ─────────────────────────────────────────────────────────────
 export const appointmentsApi = {
-  getAll: () =>
-    api.get<{ data: Appointment[] }>('/appointments').then((r) => r.data.data),
+  getAll: (filters?: { status?: string; dateFrom?: string; dateTo?: string }) => {
+    const params: Record<string, string> = {};
+    if (filters?.status) params.status = filters.status;
+    if (filters?.dateFrom) params.dateFrom = filters.dateFrom;
+    if (filters?.dateTo) params.dateTo = filters.dateTo;
+    return api.get<{ data: Appointment[] }>('/appointments', { params }).then((r) => r.data.data);
+  },
   getById: (id: string) =>
     api.get<{ data: Appointment }>(`/appointments/${id}`).then((r) => r.data.data),
   create: (data: CreateAppointmentInput) =>

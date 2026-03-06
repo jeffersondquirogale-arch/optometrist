@@ -22,7 +22,7 @@ export function ConsultationNewPage() {
 
   const { data: patients } = useQuery({
     queryKey: ['patients'],
-    queryFn: patientsApi.getAll,
+    queryFn: () => patientsApi.getAll(),
   });
 
   const mutation = useMutation({

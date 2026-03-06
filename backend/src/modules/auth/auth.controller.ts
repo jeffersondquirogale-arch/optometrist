@@ -1,14 +1,11 @@
 import { Request, Response } from 'express';
 import * as authService from './auth.service';
 import { loginSchema } from './auth.dto';
-import { AppError } from '../../middlewares/error.middleware';
+import { validate } from '../../utils/validate';
 
 export async function login(req: Request, res: Response) {
-  const parsed = loginSchema.safeParse(req.body);
-  if (!parsed.success) {
-    throw new AppError(parsed.error.errors[0].message, 400);
-  }
-  const result = await authService.login(parsed.data);
+  const data = validate(loginSchema, req.body);
+  const result = await authService.login(data);
   res.json({ data: result });
 }
 

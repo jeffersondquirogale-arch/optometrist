@@ -7,13 +7,32 @@ export const api = axios.create({
   },
 });
 
+export interface ApiFieldError {
+  field: string;
+  message: string;
+}
+
+export class ApiError extends Error {
+  public readonly status: number;
+  public readonly errors: ApiFieldError[];
+
+  constructor(message: string, status: number, errors: ApiFieldError[] = []) {
+    super(message);
+    this.status = status;
+    this.errors = errors;
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
+}
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    const message =
-      error.response?.data?.message ?? 'Ha ocurrido un error. Intente nuevamente.';
-    console.error('[API Error]', message);
-    return Promise.reject(new Error(message));
+    const status: number = error.response?.status ?? 0;
+    const data = error.response?.data ?? {};
+    const message: string = data.message ?? 'Ha ocurrido un error. Intente nuevamente.';
+    const errors: ApiFieldError[] = Array.isArray(data.errors) ? data.errors : [];
+    console.error('[API Error]', status, message);
+    return Promise.reject(new ApiError(message, status, errors));
   },
 );
 

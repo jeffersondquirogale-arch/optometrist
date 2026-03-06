@@ -1,5 +1,8 @@
 # Sistema de Gestión Clínica Óptica
 
+> **Fase 4B — Validación reforzada, manejo de errores y calidad de datos clínicos**  
+> La Fase 4B endurece el sistema: las entradas son validadas más estrictamente en backend y frontend, las respuestas de error son coherentes y distinguibles (`400`, `401`, `403`, `404`, `409`, `500`), y los datos clínicos pasan por rangos clínicos razonables antes de ser persistidos.
+>
 > **Fase 4A — Permisos por rol reales en backend y frontend**  
 > La Fase 4A hace que las distinciones de roles sean funcionales: el backend devuelve `403` para operaciones no permitidas según el rol, y el frontend oculta o deshabilita acciones que el usuario no puede realizar.
 >
@@ -351,6 +354,56 @@ La Fase 3A agrega autenticación y control de acceso:
 - **Rutas protegidas**: `ProtectedRoute` redirige a `/login` si no hay sesión activa
 - **Estado de carga**: Pantalla de carga mientras se restaura la sesión
 - **Seed de usuario inicial**: `npm run prisma:seed` crea el primer usuario administrador
+
+---
+
+## Notas de la Fase 4B
+
+La Fase 4B fortalece la validación, el manejo de errores y la calidad de datos clínicos en todo el sistema:
+
+### Backend — Validación
+
+#### Pacientes
+- `firstName` y `lastName`: obligatorios, máximo 100 caracteres.
+- `documentId`: máximo 30 caracteres.
+- `birthDate`: debe ser una fecha válida y no futura.
+- `email`: formato de email válido (si se proporciona), máximo 150 caracteres.
+- `phone`: máximo 30 caracteres. `address`: máximo 200. `occupation`: máximo 100. `notes`: máximo 1000.
+
+#### Citas
+- `scheduledAt`: obligatorio, debe ser una fecha/hora válida.
+- `reason`: máximo 500 caracteres. `notes`: máximo 1000 caracteres.
+- `status`: debe ser uno de los valores del enum; error `400` si el valor es inválido.
+
+#### Consultas
+- `patientId` y `doctorId`: obligatorios.
+- `consultationDate`: debe ser una fecha válida si se proporciona.
+- Campos de texto: límites de caracteres en `reason` (500), `diagnosis`/`treatment` (1000), `observations` (2000).
+- `paymentAmount`: no puede ser negativo.
+- **Datos clínicos con rangos**:
+  - **Esfera / Cilindro**: entre −30 y +30 D.
+  - **Eje**: entre 0 y 180°, entero.
+  - **Adición**: entre 0 y 4 D.
+  - **DP (distancia pupilar)**: entre 20 y 40 mm.
+  - **Queratometría (K)**: entre 30 y 60 D.
+  - **Estereopsis (segundos)**: ≥ 0.
+  - Campos de texto de secciones clínicas: máximo 200 caracteres por campo, notas hasta 1000.
+
+### Backend — Manejo de errores
+
+- **`ValidationError`**: nueva clase de error con `{ status, message, errors: [{field, message}] }`. Permite retornar todos los errores de validación en una sola respuesta `400`, no solo el primero.
+- **Errores de Prisma**: `P2002` (unicidad violada) retorna `409` con campo afectado. `P2025` (no encontrado) retorna `404`.
+- **Helper `validate()`**: centraliza la validación Zod en todos los controladores, lanzando `ValidationError` con lista completa de errores.
+- **Códigos coherentes**: `400` validación, `401` sin autenticación, `403` sin autorización, `404` recurso no encontrado, `409` conflicto de unicidad, `500` error interno.
+
+### Frontend — Validación y UX
+
+- **Login**: validación inline antes de enviar (campo vacío, formato de email).
+- **Formulario de paciente**: mensajes de error por campo (`firstName`, `lastName`, `birthDate`, `email`). Errores del servidor con campo específico se muestran al lado del campo correspondiente.
+- **Formulario de cita**: errores del servidor con campo específico se propagan a `fieldErrors` del formulario.
+- **Formulario de consulta**: errores del servidor con múltiples campos se listan todos en el banner de error.
+- **`ApiError`**: nueva clase en el cliente API que transporta `status` y `errors[]` de la respuesta. Permite que los formularios lean y muestren errores por campo provenientes del servidor.
+- **CSS `.field-error` e `.is-invalid`**: estilos estándar para mensajes de error inline y campos con error.
 
 ---
 

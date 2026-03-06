@@ -29,7 +29,7 @@ export function ConsultationNewPage() {
     mutationFn: consultationsApi.create,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['consultations'] });
-      navigate('/');
+      navigate('/consultations');
     },
     onError: (err: Error) => setError(err.message),
   });
@@ -162,7 +162,7 @@ export function ConsultationNewPage() {
             <button
               type="button"
               className="btn btn-secondary"
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/consultations')}
             >
               Cancelar
             </button>

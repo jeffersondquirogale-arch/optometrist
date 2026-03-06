@@ -124,7 +124,7 @@ export function PatientDetailPage() {
       </div>
 
       <div className="flex gap-2 mt-2">
-        <Link to="/" className="btn btn-secondary">
+        <Link to="/patients" className="btn btn-secondary">
           ← Volver al listado
         </Link>
       </div>

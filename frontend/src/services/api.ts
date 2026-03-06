@@ -93,6 +93,26 @@ export const appointmentsApi = {
     api.patch<{ data: Appointment }>(`/appointments/${id}`, data).then((r) => r.data.data),
 };
 
+// ─── Dashboard ────────────────────────────────────────────────────────────────
+export const dashboardApi = {
+  getSummary: () =>
+    api.get<{ data: DashboardSummary }>('/dashboard/summary').then((r) => r.data.data),
+  getRecentPatients: () =>
+    api.get<{ data: RecentPatient[] }>('/dashboard/recent-patients').then((r) => r.data.data),
+  getRecentConsultations: () =>
+    api
+      .get<{ data: RecentConsultation[] }>('/dashboard/recent-consultations')
+      .then((r) => r.data.data),
+  getTodayAppointments: () =>
+    api
+      .get<{ data: Appointment[] }>('/dashboard/today-appointments')
+      .then((r) => r.data.data),
+  getUpcomingAppointments: () =>
+    api
+      .get<{ data: Appointment[] }>('/dashboard/upcoming-appointments')
+      .then((r) => r.data.data),
+};
+
 // ─── Charts ───────────────────────────────────────────────────────────────────
 export const chartsApi = {
   getPatientEvolution: (patientId: string) =>
@@ -367,4 +387,32 @@ export interface EvolutionPoint {
     scVision: string | null;
     ccVision: string | null;
   };
+}
+
+// ─── Dashboard types ──────────────────────────────────────────────────────────
+export interface DashboardSummary {
+  totalPatients: number;
+  todayAppointmentsCount: number;
+  upcomingAppointmentsCount: number;
+  recentConsultationsCount: number;
+  appointmentsByStatus: Record<string, number>;
+}
+
+export interface RecentPatient {
+  id: string;
+  firstName: string;
+  lastName: string;
+  documentId?: string;
+  phone?: string;
+  createdAt: string;
+}
+
+export interface RecentConsultation {
+  id: string;
+  consultationDate: string;
+  reason?: string;
+  diagnosis?: string;
+  paymentStatus: string;
+  patient: { id: string; firstName: string; lastName: string };
+  doctor: { id: string; specialty?: string; user: { name: string } };
 }

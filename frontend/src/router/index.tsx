@@ -4,6 +4,7 @@ import { ProtectedRoute } from './ProtectedRoute';
 import { RoleGuard } from './RoleGuard';
 import { LoginPage } from '../modules/auth/LoginPage';
 import { ForbiddenPage } from '../modules/auth/ForbiddenPage';
+import { DashboardPage } from '../modules/dashboard/DashboardPage';
 import { PatientListPage } from '../modules/patients/PatientListPage';
 import { PatientNewPage } from '../modules/patients/PatientNewPage';
 import { PatientDetailPage } from '../modules/patients/PatientDetailPage';
@@ -33,6 +34,10 @@ export const router = createBrowserRouter([
         children: [
           {
             index: true,
+            element: <DashboardPage />,
+          },
+          {
+            path: 'patients',
             element: <PatientListPage />,
           },
           {

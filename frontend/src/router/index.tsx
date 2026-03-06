@@ -1,7 +1,9 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { AppLayout } from '../layouts/AppLayout';
 import { ProtectedRoute } from './ProtectedRoute';
+import { RoleGuard } from './RoleGuard';
 import { LoginPage } from '../modules/auth/LoginPage';
+import { ForbiddenPage } from '../modules/auth/ForbiddenPage';
 import { PatientListPage } from '../modules/patients/PatientListPage';
 import { PatientNewPage } from '../modules/patients/PatientNewPage';
 import { PatientDetailPage } from '../modules/patients/PatientDetailPage';
@@ -19,6 +21,10 @@ export const router = createBrowserRouter([
     element: <LoginPage />,
   },
   {
+    path: '/403',
+    element: <ForbiddenPage />,
+  },
+  {
     element: <ProtectedRoute />,
     children: [
       {
@@ -28,10 +34,6 @@ export const router = createBrowserRouter([
           {
             index: true,
             element: <PatientListPage />,
-          },
-          {
-            path: 'patients/new',
-            element: <PatientNewPage />,
           },
           {
             path: 'patients/:id',
@@ -46,30 +48,52 @@ export const router = createBrowserRouter([
             element: <PatientEvolutionPage />,
           },
           {
-            path: 'consultations',
-            element: <ConsultationListPage />,
-          },
-          {
-            path: 'consultations/new',
-            element: <ConsultationFormPage mode="new" />,
-          },
-          {
-            path: 'consultations/:id',
-            element: <ConsultationDetailPage />,
-          },
-          {
-            path: 'consultations/:id/edit',
-            element: <ConsultationFormPage mode="edit" />,
-          },
-          {
             path: 'appointments',
             element: <AppointmentListPage />,
           },
+          // Rutas restringidas a ADMIN y STAFF (creación/edición de pacientes)
+          {
+            element: <RoleGuard roles={['ADMIN', 'STAFF']} />,
+            children: [
+              {
+                path: 'patients/new',
+                element: <PatientNewPage />,
+              },
+            ],
+          },
+          // Rutas restringidas a ADMIN y DOCTOR (gestión clínica)
+          {
+            element: <RoleGuard roles={['ADMIN', 'DOCTOR']} />,
+            children: [
+              {
+                path: 'consultations',
+                element: <ConsultationListPage />,
+              },
+              {
+                path: 'consultations/new',
+                element: <ConsultationFormPage mode="new" />,
+              },
+              {
+                path: 'consultations/:id',
+                element: <ConsultationDetailPage />,
+              },
+              {
+                path: 'consultations/:id/edit',
+                element: <ConsultationFormPage mode="edit" />,
+              },
+            ],
+          },
         ],
       },
+      // Impresión restringida a ADMIN y DOCTOR
       {
-        path: '/print/consultations/:id',
-        element: <PrintConsultationPage />,
+        element: <RoleGuard roles={['ADMIN', 'DOCTOR']} />,
+        children: [
+          {
+            path: '/print/consultations/:id',
+            element: <PrintConsultationPage />,
+          },
+        ],
       },
     ],
   },

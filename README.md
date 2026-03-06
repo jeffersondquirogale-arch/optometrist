@@ -1,5 +1,8 @@
 # Sistema de Gestión Clínica Óptica
 
+> **Fase 4A — Permisos por rol reales en backend y frontend**  
+> La Fase 4A hace que las distinciones de roles sean funcionales: el backend devuelve `403` para operaciones no permitidas según el rol, y el frontend oculta o deshabilita acciones que el usuario no puede realizar.
+>
 > **Fase 3A — Autenticación, cuentas de usuario y control de acceso por roles**  
 > La Fase 3A agrega autenticación JWT, gestión de usuarios, autorización por rol y registro de auditoría con usuario real. El flujo de login está en español y se integra de forma transparente con el sistema clínico existente.
 >
@@ -63,7 +66,31 @@ Sistema web para la gestión integral de una clínica óptica, que permite regis
 | `DOCTOR` | Médico optometrista |
 | `STAFF` | Personal administrativo |
 
-El campo `role` del modelo `User` controla el nivel de acceso. Actualmente todos los roles autenticados tienen acceso a las operaciones del sistema; el middleware `requireRole` está disponible para restringir rutas específicas en el futuro.
+El campo `role` del modelo `User` controla el nivel de acceso. Desde la Fase 4A, cada rol tiene permisos específicos aplicados tanto en el backend (middleware `requireRole`) como en el frontend (hook `usePermissions` + componente `RoleGuard`).
+
+### Permisos efectivos por rol (Fase 4A)
+
+| Acción | ADMIN | DOCTOR | STAFF |
+|---|:---:|:---:|:---:|
+| Ver listado de pacientes | ✅ | ✅ | ✅ |
+| Ver detalle de paciente | ✅ | ✅ | ✅ |
+| Crear/editar paciente | ✅ | ❌ | ✅ |
+| Eliminar paciente | ✅ | ❌ | ❌ |
+| Ver historial de consultas | ✅ | ✅ | ✅ |
+| Ver evolución clínica | ✅ | ✅ | ✅ |
+| Ver detalle de consulta | ✅ | ✅ | ✅ |
+| Crear consulta | ✅ | ✅ | ❌ |
+| Editar consulta | ✅ | ✅ | ❌ |
+| Imprimir consulta | ✅ | ✅ | ❌ |
+| Ver/crear/actualizar citas | ✅ | ✅ | ✅ |
+
+### Supuestos de flujo de trabajo por rol
+
+**ADMIN**: Acceso irrestricto a todos los módulos. Puede gestionar pacientes, consultas, citas e impresión. Es el único rol autorizado para eliminar pacientes.
+
+**DOCTOR**: Flujo clínico completo. Puede ver y gestionar pacientes, crear y editar consultas, ver historial y evolución, imprimir fichas y gestionar citas. No puede crear/editar datos administrativos de pacientes ni eliminarlos.
+
+**STAFF**: Flujo de recepción. Puede registrar y editar pacientes, gestionar citas, y ver el historial de consultas para coordinar la atención. No puede crear ni editar consultas clínicas ni imprimir fichas. El menú de **Consultas** no aparece en su navegación.
 
 ### Variables de entorno requeridas
 
@@ -148,15 +175,18 @@ optometrist/
 │   │   │   └── AppLayout.tsx      # Layout principal con navegación y logout
 │   │   ├── modules/
 │   │   │   ├── auth/
-│   │   │   │   ├── AuthContext.tsx # Contexto de sesión + proveedor
-│   │   │   │   └── LoginPage.tsx   # Formulario de login
+│   │   │   │   ├── AuthContext.tsx    # Contexto de sesión + proveedor
+│   │   │   │   ├── ForbiddenPage.tsx  # Página 403 — acceso denegado
+│   │   │   │   ├── LoginPage.tsx      # Formulario de login
+│   │   │   │   └── usePermissions.ts  # Hook de autorización por rol
 │   │   │   ├── patients/          # Listado, detalle, historial, evolución
 │   │   │   ├── consultations/     # Nueva/editar consulta, detalle
 │   │   │   ├── appointments/      # Listado y gestión de citas
 │   │   │   └── print-template/    # Ficha de consulta imprimible (A4)
 │   │   ├── router/
-│   │   │   ├── index.tsx          # Definición de rutas
-│   │   │   └── ProtectedRoute.tsx # Guarda de rutas autenticadas
+│   │   │   ├── index.tsx          # Definición de rutas (con RoleGuard)
+│   │   │   ├── ProtectedRoute.tsx # Guarda de rutas autenticadas
+│   │   │   └── RoleGuard.tsx      # Guarda de rutas por rol
 │   │   ├── services/
 │   │   │   ├── api.ts             # Cliente API (Axios + tipos TS)
 │   │   │   └── queryClient.ts     # Configuración de React Query
@@ -212,28 +242,31 @@ El servidor estará disponible en `http://localhost:3000`.
 
 #### Endpoints disponibles
 
-| Método | Ruta | Descripción | Auth |
-|---|---|---|---|
-| GET | `/api/health` | Estado del servidor | No |
-| POST | `/api/auth/login` | Iniciar sesión | No |
-| GET | `/api/auth/me` | Usuario autenticado | Sí |
-| GET | `/api/patients` | Listado de pacientes (soporta `?q=`) | Sí |
-| GET | `/api/patients/:id` | Detalle de paciente | Sí |
-| POST | `/api/patients` | Crear paciente | Sí |
-| PATCH | `/api/patients/:id` | Actualizar paciente | Sí |
-| GET | `/api/doctors` | Listado de doctores | Sí |
-| POST | `/api/doctors` | Crear perfil de doctor | Sí |
-| GET | `/api/consultations` | Listado de consultas | Sí |
-| GET | `/api/consultations/:id` | Detalle de consulta | Sí |
-| POST | `/api/consultations` | Crear consulta | Sí |
-| PUT | `/api/consultations/:id` | Actualizar consulta | Sí |
-| GET | `/api/consultations/patient/:patientId/history` | Historial del paciente | Sí |
-| GET | `/api/consultations/patient/:patientId/evolution` | Evolución clínica | Sí |
-| GET | `/api/charts/patients/:patientId/evolution` | Gráfica de evolución | Sí |
-| GET | `/api/appointments` | Listado de citas | Sí |
-| POST | `/api/appointments` | Crear cita | Sí |
-| PATCH | `/api/appointments/:id` | Actualizar cita | Sí |
-| GET | `/api/print/consultations/:id` | Datos para impresión | Sí |
+| Método | Ruta | Descripción | Auth | Roles |
+|---|---|---|---|---|
+| GET | `/api/health` | Estado del servidor | No | Público |
+| POST | `/api/auth/login` | Iniciar sesión | No | Público |
+| GET | `/api/auth/me` | Usuario autenticado | Sí | Todos los roles |
+| GET | `/api/patients` | Listado de pacientes (soporta `?q=`) | Sí | Todos los roles |
+| GET | `/api/patients/:id` | Detalle de paciente | Sí | Todos los roles |
+| POST | `/api/patients` | Crear paciente | Sí | ADMIN, STAFF |
+| PATCH | `/api/patients/:id` | Actualizar paciente | Sí | ADMIN, STAFF |
+| DELETE | `/api/patients/:id` | Eliminar paciente | Sí | ADMIN |
+| GET | `/api/doctors` | Listado de doctores | Sí | Todos los roles |
+| POST | `/api/doctors` | Crear perfil de doctor | Sí | Todos los roles |
+| GET | `/api/consultations` | Listado de consultas | Sí | Todos los roles |
+| GET | `/api/consultations/:id` | Detalle de consulta | Sí | Todos los roles |
+| POST | `/api/consultations` | Crear consulta | Sí | ADMIN, DOCTOR |
+| PUT | `/api/consultations/:id` | Actualizar consulta | Sí | ADMIN, DOCTOR |
+| GET | `/api/consultations/patient/:patientId/history` | Historial del paciente | Sí | Todos los roles |
+| GET | `/api/consultations/patient/:patientId/evolution` | Evolución clínica | Sí | Todos los roles |
+| GET | `/api/charts/patients/:patientId/evolution` | Gráfica de evolución | Sí | Todos los roles |
+| GET | `/api/appointments` | Listado de citas | Sí | Todos los roles |
+| POST | `/api/appointments` | Crear cita | Sí | Todos los roles |
+| PATCH | `/api/appointments/:id` | Actualizar cita | Sí | Todos los roles |
+| GET | `/api/print/consultations/:id` | Datos para impresión | Sí | ADMIN, DOCTOR |
+
+> **Nota**: "Todos los roles" significa cualquier usuario autenticado (`ADMIN`, `DOCTOR` o `STAFF`). Las rutas marcadas como "Público" no requieren autenticación.
 
 ### Frontend
 
@@ -252,20 +285,23 @@ La aplicación estará disponible en `http://localhost:5173`.
 
 #### Rutas del frontend
 
-| Ruta | Descripción | Auth |
+| Ruta | Descripción | Roles permitidos |
 |---|---|---|
-| `/login` | Página de inicio de sesión | No |
-| `/` | Listado de pacientes | Sí |
-| `/patients/new` | Crear nuevo paciente | Sí |
-| `/patients/:id` | Detalle del paciente | Sí |
-| `/patients/:id/history` | Historial de consultas | Sí |
-| `/patients/:id/evolution` | Evolución clínica longitudinal | Sí |
-| `/consultations` | Listado de consultas | Sí |
-| `/consultations/new` | Nueva consulta | Sí |
-| `/consultations/:id` | Detalle de consulta | Sí |
-| `/consultations/:id/edit` | Editar consulta | Sí |
-| `/appointments` | Listado y gestión de citas | Sí |
-| `/print/consultations/:id` | Ficha de consulta imprimible A4 | Sí |
+| `/login` | Página de inicio de sesión | Público |
+| `/403` | Página de acceso denegado | Público |
+| `/` | Listado de pacientes | Todos los roles |
+| `/patients/new` | Crear nuevo paciente | ADMIN, STAFF |
+| `/patients/:id` | Detalle del paciente | Todos los roles |
+| `/patients/:id/history` | Historial de consultas | Todos los roles |
+| `/patients/:id/evolution` | Evolución clínica longitudinal | Todos los roles |
+| `/consultations` | Listado de consultas | ADMIN, DOCTOR |
+| `/consultations/new` | Nueva consulta | ADMIN, DOCTOR |
+| `/consultations/:id` | Detalle de consulta | ADMIN, DOCTOR |
+| `/consultations/:id/edit` | Editar consulta | ADMIN, DOCTOR |
+| `/appointments` | Listado y gestión de citas | Todos los roles |
+| `/print/consultations/:id` | Ficha de consulta imprimible A4 | ADMIN, DOCTOR |
+
+> **Nota**: "Todos los roles" significa cualquier usuario autenticado (`ADMIN`, `DOCTOR` o `STAFF`).
 
 ---
 
@@ -315,6 +351,26 @@ La Fase 3A agrega autenticación y control de acceso:
 - **Rutas protegidas**: `ProtectedRoute` redirige a `/login` si no hay sesión activa
 - **Estado de carga**: Pantalla de carga mientras se restaura la sesión
 - **Seed de usuario inicial**: `npm run prisma:seed` crea el primer usuario administrador
+
+---
+
+## Notas de la Fase 4A
+
+La Fase 4A convierte las distinciones de roles en permisos reales y verificados:
+
+### Backend
+- **Restricciones en consultas**: `POST /api/consultations`, `PUT /api/consultations/:id` y `PATCH /api/consultations/:id` ahora requieren rol `ADMIN` o `DOCTOR`. Los endpoints de lectura (`GET`) son accesibles para todos los roles autenticados.
+- **Restricciones en pacientes**: `POST /api/patients` y `PATCH /api/patients/:id` requieren `ADMIN` o `STAFF`. `DELETE /api/patients/:id` requiere `ADMIN` exclusivamente.
+- **Restricciones en impresión**: `GET /api/print/consultations/:id` requiere `ADMIN` o `DOCTOR`.
+- **Citas abiertas a todos**: Los endpoints de citas (`/api/appointments`) son accesibles para todos los roles autenticados (`ADMIN`, `DOCTOR`, `STAFF`), ya que la recepción necesita gestionar turnos.
+- **Respuestas coherentes**: El backend devuelve `401` si no hay token y `403` si el rol no está autorizado.
+
+### Frontend
+- **Hook `usePermissions`**: Provee funciones de autorización basadas en el rol del usuario (`canCreateConsultation`, `canEditConsultation`, `canPrintConsultation`, `canCreatePatient`, etc.).
+- **Componente `RoleGuard`**: Protege rutas en el router; muestra la página 403 si el rol no está permitido.
+- **Navegación adaptativa**: El enlace **Consultas** solo aparece en el menú para `ADMIN` y `DOCTOR`.
+- **Botones contextuales**: Los botones de crear/editar consultas, imprimir fichas y eliminar pacientes solo se muestran a los roles habilitados.
+- **Página 403**: Mensaje en español con botón de retorno al inicio cuando se accede a una ruta no autorizada.
 
 ---
 

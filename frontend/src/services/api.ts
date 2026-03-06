@@ -35,6 +35,36 @@ export const consultationsApi = {
     api.get<{ data: Consultation }>(`/consultations/${id}`).then((r) => r.data.data),
   create: (data: CreateConsultationInput) =>
     api.post<{ data: Consultation }>('/consultations', data).then((r) => r.data.data),
+  update: (id: string, data: Partial<CreateConsultationInput>) =>
+    api.put<{ data: Consultation }>(`/consultations/${id}`, data).then((r) => r.data.data),
+  getPatientHistory: (patientId: string) =>
+    api
+      .get<{ data: Consultation[] }>(`/consultations/patient/${patientId}/history`)
+      .then((r) => r.data.data),
+  getPatientEvolution: (patientId: string) =>
+    api
+      .get<{ data: EvolutionPoint[] }>(`/consultations/patient/${patientId}/evolution`)
+      .then((r) => r.data.data),
+};
+
+// ─── Appointments ─────────────────────────────────────────────────────────────
+export const appointmentsApi = {
+  getAll: () =>
+    api.get<{ data: Appointment[] }>('/appointments').then((r) => r.data.data),
+  getById: (id: string) =>
+    api.get<{ data: Appointment }>(`/appointments/${id}`).then((r) => r.data.data),
+  create: (data: CreateAppointmentInput) =>
+    api.post<{ data: Appointment }>('/appointments', data).then((r) => r.data.data),
+  update: (id: string, data: Partial<CreateAppointmentInput>) =>
+    api.patch<{ data: Appointment }>(`/appointments/${id}`, data).then((r) => r.data.data),
+};
+
+// ─── Charts ───────────────────────────────────────────────────────────────────
+export const chartsApi = {
+  getPatientEvolution: (patientId: string) =>
+    api
+      .get<{ data: EvolutionPoint[] }>(`/charts/patients/${patientId}/evolution`)
+      .then((r) => r.data.data),
 };
 
 // ─── Print ────────────────────────────────────────────────────────────────────
@@ -87,6 +117,26 @@ export interface DoctorProfile {
   user: { name: string };
 }
 
+export interface Appointment {
+  id: string;
+  patientId: string;
+  scheduledAt: string;
+  reason?: string;
+  status: 'PROGRAMADA' | 'CONFIRMADA' | 'EN_CURSO' | 'COMPLETADA' | 'CANCELADA' | 'NO_ASISTIO';
+  notes?: string;
+  patient?: Patient;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateAppointmentInput {
+  patientId: string;
+  scheduledAt: string;
+  reason?: string;
+  status?: 'PROGRAMADA' | 'CONFIRMADA' | 'EN_CURSO' | 'COMPLETADA' | 'CANCELADA' | 'NO_ASISTIO';
+  notes?: string;
+}
+
 export interface Lensometry {
   odSphere?: number;
   odCylinder?: number;
@@ -129,6 +179,90 @@ export interface FinalFormula {
   notes?: string;
 }
 
+export interface OcularMotility {
+  versions?: string;
+  ductions?: string;
+  coverTest?: string;
+  hirschberg?: string;
+  npc?: string;
+  notes?: string;
+}
+
+export interface ExternalExam {
+  eyelids?: string;
+  conjunctiva?: string;
+  cornea?: string;
+  iris?: string;
+  pupil?: string;
+  lens?: string;
+  fundus?: string;
+  notes?: string;
+}
+
+export interface CftaMoscopia {
+  campimetry?: string;
+  tonometry?: string;
+  ascan?: string;
+  floaters?: string;
+  notes?: string;
+}
+
+export interface Keratometry {
+  odK1?: number;
+  odK1Axis?: number;
+  odK2?: number;
+  odK2Axis?: number;
+  oiK1?: number;
+  oiK1Axis?: number;
+  oiK2?: number;
+  oiK2Axis?: number;
+  notes?: string;
+}
+
+export interface ColorTest {
+  odResult?: string;
+  oiResult?: string;
+  testType?: string;
+  notes?: string;
+}
+
+export interface StereopsisTest {
+  result?: string;
+  testType?: string;
+  seconds?: number;
+  notes?: string;
+}
+
+export interface Refraction {
+  odSphere?: number;
+  odCylinder?: number;
+  odAxis?: number;
+  oiSphere?: number;
+  oiCylinder?: number;
+  oiAxis?: number;
+  notes?: string;
+}
+
+export interface SubjectiveRefraction {
+  odSphere?: number;
+  odCylinder?: number;
+  odAxis?: number;
+  odAdd?: number;
+  odVision?: string;
+  oiSphere?: number;
+  oiCylinder?: number;
+  oiAxis?: number;
+  oiAdd?: number;
+  oiVision?: string;
+  notes?: string;
+}
+
+export interface ConsultationPathology {
+  id: string;
+  name: string;
+  description?: string;
+}
+
 export interface Consultation {
   id: string;
   patientId: string;
@@ -137,6 +271,7 @@ export interface Consultation {
   reason?: string;
   diagnosis?: string;
   treatment?: string;
+  control?: string;
   observations?: string;
   paymentStatus: 'PENDIENTE' | 'PAGADO' | 'PARCIAL' | 'ANULADO';
   paymentAmount?: number;
@@ -145,6 +280,15 @@ export interface Consultation {
   lensometry?: Lensometry;
   visualAcuity?: VisualAcuity;
   finalFormula?: FinalFormula;
+  ocularMotility?: OcularMotility;
+  externalExam?: ExternalExam;
+  cftaMoscopia?: CftaMoscopia;
+  keratometry?: Keratometry;
+  colorTest?: ColorTest;
+  stereopsisTest?: StereopsisTest;
+  refraction?: Refraction;
+  subjectiveRefraction?: SubjectiveRefraction;
+  pathologies?: ConsultationPathology[];
 }
 
 export interface CreateConsultationInput {
@@ -155,7 +299,38 @@ export interface CreateConsultationInput {
   reason?: string;
   diagnosis?: string;
   treatment?: string;
+  control?: string;
   observations?: string;
   paymentStatus?: 'PENDIENTE' | 'PAGADO' | 'PARCIAL' | 'ANULADO';
   paymentAmount?: number;
+  lensometry?: Lensometry;
+  visualAcuity?: VisualAcuity;
+  finalFormula?: FinalFormula;
+  ocularMotility?: OcularMotility;
+  externalExam?: ExternalExam;
+  cftaMoscopia?: CftaMoscopia;
+  keratometry?: Keratometry;
+  colorTest?: ColorTest;
+  stereopsisTest?: StereopsisTest;
+  refraction?: Refraction;
+  subjectiveRefraction?: SubjectiveRefraction;
+}
+
+export interface EvolutionPoint {
+  consultationId: string;
+  date: string;
+  od: {
+    sphere: number | null;
+    cylinder: number | null;
+    axis: number | null;
+    scVision: string | null;
+    ccVision: string | null;
+  };
+  oi: {
+    sphere: number | null;
+    cylinder: number | null;
+    axis: number | null;
+    scVision: string | null;
+    ccVision: string | null;
+  };
 }

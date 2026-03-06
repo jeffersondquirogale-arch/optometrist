@@ -6,8 +6,10 @@ import morgan from 'morgan';
 import { env } from './config/env';
 import { errorMiddleware } from './middlewares/error.middleware';
 import { notFoundMiddleware } from './middlewares/not-found.middleware';
+import { authMiddleware } from './middlewares/auth.middleware';
 
 // Importar routers de módulos
+import { authRouter } from './modules/auth/auth.router';
 import { patientsRouter } from './modules/patients/patients.router';
 import { doctorsRouter } from './modules/doctors/doctors.router';
 import { consultationsRouter } from './modules/consultations/consultations.router';
@@ -29,13 +31,16 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// ─── Rutas de módulos ─────────────────────────────────────────────────────────
-app.use('/api/patients', patientsRouter);
-app.use('/api/doctors', doctorsRouter);
-app.use('/api/consultations', consultationsRouter);
-app.use('/api/appointments', appointmentsRouter);
-app.use('/api/print', printRouter);
-app.use('/api/charts', chartsRouter);
+// ─── Auth (rutas públicas) ────────────────────────────────────────────────────
+app.use('/api/auth', authRouter);
+
+// ─── Rutas protegidas ─────────────────────────────────────────────────────────
+app.use('/api/patients', authMiddleware, patientsRouter);
+app.use('/api/doctors', authMiddleware, doctorsRouter);
+app.use('/api/consultations', authMiddleware, consultationsRouter);
+app.use('/api/appointments', authMiddleware, appointmentsRouter);
+app.use('/api/print', authMiddleware, printRouter);
+app.use('/api/charts', authMiddleware, chartsRouter);
 
 // ─── Middlewares de error ─────────────────────────────────────────────────────
 app.use(notFoundMiddleware);

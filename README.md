@@ -1,6 +1,8 @@
 # Sistema de Gestión Clínica Óptica
 
-> **Fase 3C — Mejoras de usabilidad operativa**  
+> **Fase 3A — Autenticación, cuentas de usuario y control de acceso por roles**  
+> La Fase 3A agrega autenticación JWT, gestión de usuarios, autorización por rol y registro de auditoría con usuario real. El flujo de login está en español y se integra de forma transparente con el sistema clínico existente.
+>
 > La Fase 3C mejora la usabilidad diaria del sistema: búsqueda y filtros en el listado de pacientes, nueva página de consultas con filtro por paciente, filtros de estado y fecha en citas, acciones rápidas mejoradas en tablas, feedback de éxito/error en formularios con mensajes inline, y estados vacíos más informativos.
 >
 > La Fase 3B refina el formulario de consulta multisección con navegación lateral sticky y diseño simétrico OD/OI, y actualiza la ficha de impresión A4 para que se parezca más a un formulario clínico real, con todas las secciones oftalmológicas y tipografía y estructura propias de un documento médico.
@@ -27,6 +29,8 @@ Sistema web para la gestión integral de una clínica óptica, que permite regis
 | Prisma | ORM para base de datos |
 | PostgreSQL | Base de datos relacional |
 | Zod | Validación de esquemas |
+| bcryptjs | Hash de contraseñas |
+| jsonwebtoken | Tokens JWT |
 
 ### Frontend
 | Tecnología | Uso |
@@ -40,21 +44,92 @@ Sistema web para la gestión integral de una clínica óptica, que permite regis
 
 ---
 
+## Autenticación (Fase 3A)
+
+### Flujo de login
+
+1. El usuario accede a cualquier ruta protegida y es redirigido a `/login`.
+2. Ingresa su correo electrónico y contraseña.
+3. El backend valida las credenciales y devuelve un token JWT.
+4. El token se almacena en `localStorage` y se incluye automáticamente en todas las peticiones API.
+5. Al refrescar la página, la sesión se restaura automáticamente llamando a `GET /api/auth/me`.
+6. El botón **Cerrar sesión** en el encabezado elimina el token y redirige a `/login`.
+
+### Roles del sistema
+
+| Rol | Descripción |
+|---|---|
+| `ADMIN` | Administrador con acceso completo |
+| `DOCTOR` | Médico optometrista |
+| `STAFF` | Personal administrativo |
+
+El campo `role` del modelo `User` controla el nivel de acceso. Actualmente todos los roles autenticados tienen acceso a las operaciones del sistema; el middleware `requireRole` está disponible para restringir rutas específicas en el futuro.
+
+### Variables de entorno requeridas
+
+Además de `DATABASE_URL`, el backend requiere:
+
+| Variable | Descripción | Ejemplo |
+|---|---|---|
+| `JWT_SECRET` | Secreto para firmar tokens JWT (mínimo 32 caracteres) | `mi_secreto_muy_largo_y_aleatorio_aqui` |
+| `JWT_EXPIRES_IN` | Duración del token | `8h` |
+
+### Credenciales de bootstrap (seed)
+
+Ejecuta el seed para crear el usuario administrador inicial:
+
+```bash
+cd backend
+npm run prisma:seed
+```
+
+Las credenciales por defecto son:
+
+| Campo | Valor |
+|---|---|
+| Email | `admin@clinica.com` |
+| Contraseña | `Admin1234!` |
+
+> ⚠️ **Cambia la contraseña después del primer inicio de sesión.**
+
+Puedes personalizar las credenciales del seed con variables de entorno antes de ejecutarlo:
+
+```bash
+SEED_ADMIN_EMAIL=mi@correo.com \
+SEED_ADMIN_PASSWORD=MiContraseñaSegura! \
+SEED_ADMIN_NAME="Mi Nombre" \
+npm run prisma:seed
+```
+
+### Endpoints de autenticación
+
+| Método | Ruta | Descripción | Auth requerida |
+|---|---|---|---|
+| POST | `/api/auth/login` | Iniciar sesión (devuelve token JWT) | No |
+| GET | `/api/auth/me` | Datos del usuario autenticado | Sí |
+
+Todos los demás endpoints del API requieren el header `Authorization: Bearer <token>`.
+
+---
+
 ## Estructura del repositorio
 
 ```
 optometrist/
 ├── backend/
 │   ├── prisma/
-│   │   └── schema.prisma          # Esquema de la base de datos
+│   │   ├── schema.prisma          # Esquema de la base de datos
+│   │   └── seed.ts                # Seed del usuario administrador inicial
 │   ├── src/
 │   │   ├── config/
 │   │   │   ├── env.ts             # Validación de variables de entorno
 │   │   │   └── prisma.ts          # Cliente Prisma singleton
 │   │   ├── middlewares/
+│   │   │   ├── auth.middleware.ts # JWT verify + requireRole
 │   │   │   ├── error.middleware.ts
 │   │   │   └── not-found.middleware.ts
 │   │   ├── modules/
+│   │   │   ├── auth/              # Login, /me, DTOs
 │   │   │   ├── patients/          # CRUD de pacientes
 │   │   │   ├── doctors/           # CRUD de perfiles de doctores
 │   │   │   ├── consultations/     # CRUD + historial + evolución
@@ -70,19 +145,23 @@ optometrist/
 ├── frontend/
 │   ├── src/
 │   │   ├── layouts/
-│   │   │   └── AppLayout.tsx      # Layout principal con navegación
+│   │   │   └── AppLayout.tsx      # Layout principal con navegación y logout
 │   │   ├── modules/
+│   │   │   ├── auth/
+│   │   │   │   ├── AuthContext.tsx # Contexto de sesión + proveedor
+│   │   │   │   └── LoginPage.tsx   # Formulario de login
 │   │   │   ├── patients/          # Listado, detalle, historial, evolución
 │   │   │   ├── consultations/     # Nueva/editar consulta, detalle
 │   │   │   ├── appointments/      # Listado y gestión de citas
 │   │   │   └── print-template/    # Ficha de consulta imprimible (A4)
 │   │   ├── router/
-│   │   │   └── index.tsx          # Definición de rutas
+│   │   │   ├── index.tsx          # Definición de rutas
+│   │   │   └── ProtectedRoute.tsx # Guarda de rutas autenticadas
 │   │   ├── services/
 │   │   │   ├── api.ts             # Cliente API (Axios + tipos TS)
 │   │   │   └── queryClient.ts     # Configuración de React Query
 │   │   ├── styles/
-│   │   │   ├── global.css         # Estilos globales
+│   │   │   ├── global.css         # Estilos globales (incluye login)
 │   │   │   └── print.css          # Estilos de impresión A4
 │   │   ├── App.tsx
 │   │   └── main.tsx
@@ -114,13 +193,16 @@ npm install
 
 # Crear el archivo de entorno
 cp .env.example .env
-# Editar .env con los datos de conexión a PostgreSQL
+# Editar .env con los datos de conexión a PostgreSQL y JWT_SECRET
 
 # Generar el cliente Prisma
 npm run prisma:generate
 
 # Ejecutar las migraciones
 npm run prisma:migrate
+
+# Crear el usuario administrador inicial
+npm run prisma:seed
 
 # Iniciar en modo desarrollo
 npm run dev
@@ -130,26 +212,28 @@ El servidor estará disponible en `http://localhost:3000`.
 
 #### Endpoints disponibles
 
-| Método | Ruta | Descripción |
-|---|---|---|
-| GET | `/api/health` | Estado del servidor |
-| GET | `/api/patients` | Listado de pacientes (soporta `?q=` para búsqueda por nombre/documento/teléfono) |
-| GET | `/api/patients/:id` | Detalle de paciente |
-| POST | `/api/patients` | Crear paciente |
-| PATCH | `/api/patients/:id` | Actualizar paciente |
-| GET | `/api/doctors` | Listado de doctores |
-| POST | `/api/doctors` | Crear perfil de doctor |
-| GET | `/api/consultations` | Listado de consultas (soporta `?patientId=` para filtrar por paciente) |
-| GET | `/api/consultations/:id` | Detalle de consulta |
-| POST | `/api/consultations` | Crear consulta (con datos clínicos anidados) |
-| PUT | `/api/consultations/:id` | Actualizar consulta |
-| GET | `/api/consultations/patient/:patientId/history` | Historial de consultas del paciente |
-| GET | `/api/consultations/patient/:patientId/evolution` | Serie evolutiva (fórmula + AV) |
-| GET | `/api/charts/patients/:patientId/evolution` | Evolución clínica (series longitudinales) |
-| GET | `/api/appointments` | Listado de citas (soporta `?status=`, `?dateFrom=`, `?dateTo=`) |
-| POST | `/api/appointments` | Crear cita |
-| PATCH | `/api/appointments/:id` | Actualizar cita |
-| GET | `/api/print/consultations/:id` | Datos de consulta para impresión dinámica |
+| Método | Ruta | Descripción | Auth |
+|---|---|---|---|
+| GET | `/api/health` | Estado del servidor | No |
+| POST | `/api/auth/login` | Iniciar sesión | No |
+| GET | `/api/auth/me` | Usuario autenticado | Sí |
+| GET | `/api/patients` | Listado de pacientes (soporta `?q=`) | Sí |
+| GET | `/api/patients/:id` | Detalle de paciente | Sí |
+| POST | `/api/patients` | Crear paciente | Sí |
+| PATCH | `/api/patients/:id` | Actualizar paciente | Sí |
+| GET | `/api/doctors` | Listado de doctores | Sí |
+| POST | `/api/doctors` | Crear perfil de doctor | Sí |
+| GET | `/api/consultations` | Listado de consultas | Sí |
+| GET | `/api/consultations/:id` | Detalle de consulta | Sí |
+| POST | `/api/consultations` | Crear consulta | Sí |
+| PUT | `/api/consultations/:id` | Actualizar consulta | Sí |
+| GET | `/api/consultations/patient/:patientId/history` | Historial del paciente | Sí |
+| GET | `/api/consultations/patient/:patientId/evolution` | Evolución clínica | Sí |
+| GET | `/api/charts/patients/:patientId/evolution` | Gráfica de evolución | Sí |
+| GET | `/api/appointments` | Listado de citas | Sí |
+| POST | `/api/appointments` | Crear cita | Sí |
+| PATCH | `/api/appointments/:id` | Actualizar cita | Sí |
+| GET | `/api/print/consultations/:id` | Datos para impresión | Sí |
 
 ### Frontend
 
@@ -168,19 +252,20 @@ La aplicación estará disponible en `http://localhost:5173`.
 
 #### Rutas del frontend
 
-| Ruta | Descripción |
-|---|---|
-| `/` | Listado de pacientes (con búsqueda por nombre/documento/teléfono) |
-| `/patients/new` | Crear nuevo paciente |
-| `/patients/:id` | Detalle del paciente |
-| `/patients/:id/history` | Historial de consultas del paciente |
-| `/patients/:id/evolution` | Evolución clínica longitudinal |
-| `/consultations` | Listado de consultas (con filtro por paciente y búsqueda) |
-| `/consultations/new` | Nueva consulta (formulario multisección) |
-| `/consultations/:id` | Detalle de consulta |
-| `/consultations/:id/edit` | Editar consulta |
-| `/appointments` | Listado y gestión de citas (con filtros de estado y fecha) |
-| `/print/consultations/:id` | Ficha de consulta imprimible A4 (datos dinámicos) |
+| Ruta | Descripción | Auth |
+|---|---|---|
+| `/login` | Página de inicio de sesión | No |
+| `/` | Listado de pacientes | Sí |
+| `/patients/new` | Crear nuevo paciente | Sí |
+| `/patients/:id` | Detalle del paciente | Sí |
+| `/patients/:id/history` | Historial de consultas | Sí |
+| `/patients/:id/evolution` | Evolución clínica longitudinal | Sí |
+| `/consultations` | Listado de consultas | Sí |
+| `/consultations/new` | Nueva consulta | Sí |
+| `/consultations/:id` | Detalle de consulta | Sí |
+| `/consultations/:id/edit` | Editar consulta | Sí |
+| `/appointments` | Listado y gestión de citas | Sí |
+| `/print/consultations/:id` | Ficha de consulta imprimible A4 | Sí |
 
 ---
 
@@ -189,15 +274,15 @@ La aplicación estará disponible en `http://localhost:5173`.
 El esquema Prisma incluye los siguientes modelos:
 
 ### Modelos de Fase 1
-- **User** — Usuarios del sistema
-- **DoctorProfile** — Perfil profesional del médico
+- **User** — Usuarios del sistema (email, passwordHash, name, role, active)
+- **DoctorProfile** — Perfil profesional del médico (vinculado a User)
 - **Patient** — Datos del paciente
 - **Appointment** — Citas programadas
 - **Consultation** — Consulta oftalmológica
 - **Lensometry** — Graduación anterior
 - **VisualAcuity** — Agudeza visual
 - **FinalFormula** — Fórmula final recetada
-- **AuditLog** — Registro de auditoría
+- **AuditLog** — Registro de auditoría (con userId del usuario autenticado desde Fase 3A)
 
 ### Modelos nuevos en Fase 2
 - **OcularMotility** — Versiones, ducciones, Cover Test, Hirschberg, NPC
@@ -212,6 +297,24 @@ El esquema Prisma incluye los siguientes modelos:
 - **ConsultationPathology** — Patologías registradas en la consulta
 - **MedicalNote** — Notas clínicas adicionales
 - **PatientPathology** — Patologías crónicas del paciente
+
+---
+
+## Notas de la Fase 3A
+
+La Fase 3A agrega autenticación y control de acceso:
+
+- **Modelo User completo**: email, hash de contraseña bcrypt, nombre, rol (`ADMIN`/`DOCTOR`/`STAFF`), estado activo
+- **JWT-based auth**: Login devuelve un token JWT firmado; el frontend lo almacena y lo envía en cada petición
+- **Restauración de sesión**: Al recargar la página, el token es verificado con `GET /api/auth/me` para restaurar el estado de sesión
+- **Todos los endpoints protegidos**: El middleware `authMiddleware` verifica el token en todas las rutas excepto `/api/health` y `/api/auth/login`
+- **Auditoría con usuario real**: Las entradas de `AuditLog` para crear/editar consultas ahora incluyen el `userId` del usuario autenticado
+- **Login en español**: Formulario de inicio de sesión con mensajes de error en español
+- **Usuario visible en el encabezado**: El nombre y rol del usuario autenticado aparecen en el header
+- **Logout**: Botón de cierre de sesión que limpia el token y redirige a `/login`
+- **Rutas protegidas**: `ProtectedRoute` redirige a `/login` si no hay sesión activa
+- **Estado de carga**: Pantalla de carga mientras se restaura la sesión
+- **Seed de usuario inicial**: `npm run prisma:seed` crea el primer usuario administrador
 
 ---
 

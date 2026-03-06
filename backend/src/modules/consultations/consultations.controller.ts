@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import * as consultationsService from './consultations.service';
 import { createConsultationSchema } from './consultations.dto';
-import { AppError } from '../../middlewares/error.middleware';
+import { validate } from '../../utils/validate';
 
 export async function getAll(req: Request, res: Response) {
   const patientId = typeof req.query.patientId === 'string' ? req.query.patientId : undefined;
@@ -15,22 +15,16 @@ export async function getOne(req: Request, res: Response) {
 }
 
 export async function create(req: Request, res: Response) {
-  const parsed = createConsultationSchema.safeParse(req.body);
-  if (!parsed.success) {
-    throw new AppError(parsed.error.errors[0].message, 400);
-  }
-  const consultation = await consultationsService.createConsultation(parsed.data, req.user?.id);
+  const data = validate(createConsultationSchema, req.body);
+  const consultation = await consultationsService.createConsultation(data, req.user?.id);
   res.status(201).json({ data: consultation });
 }
 
 export async function update(req: Request, res: Response) {
-  const parsed = createConsultationSchema.partial().safeParse(req.body);
-  if (!parsed.success) {
-    throw new AppError(parsed.error.errors[0].message, 400);
-  }
+  const data = validate(createConsultationSchema.partial(), req.body);
   const consultation = await consultationsService.updateConsultation(
     req.params.id,
-    parsed.data,
+    data,
     req.user?.id,
   );
   res.json({ data: consultation });

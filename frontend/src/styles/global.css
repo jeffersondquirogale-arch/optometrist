@@ -390,3 +390,27 @@ tr:hover td {
   color: var(--color-text-muted);
   font-size: 1rem;
 }
+
+/* ─── Field-level validation ─────────────────────────────────────────────── */
+.field-error {
+  display: block;
+  color: var(--color-danger);
+  font-size: 0.78rem;
+  margin-top: 0.25rem;
+}
+
+.form-control.is-invalid {
+  border-color: var(--color-danger);
+}
+
+.form-control.is-invalid:focus {
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.15);
+}
+
+.login-form .form-group input.is-invalid {
+  border-color: var(--color-danger);
+}
+
+.login-form .form-group input.is-invalid:focus {
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.15);
+}

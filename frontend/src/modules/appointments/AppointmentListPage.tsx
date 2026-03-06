@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { appointmentsApi, patientsApi, Appointment, CreateAppointmentInput } from '../../services/api';
+import { appointmentsApi, patientsApi, Appointment, CreateAppointmentInput, ApiError } from '../../services/api';
 
 function formatDate(dateStr?: string) {
   if (!dateStr) return '—';
@@ -87,7 +87,16 @@ export function AppointmentListPage() {
       setSuccessMsg('Cita creada exitosamente.');
       setTimeout(() => setSuccessMsg(null), 3000);
     },
-    onError: (err: Error) => setError(err.message),
+    onError: (err: unknown) => {
+      if (err instanceof ApiError && err.errors.length > 0) {
+        const fe: Record<string, string> = {};
+        err.errors.forEach(({ field, message }) => { fe[field] = message; });
+        setFieldErrors(fe);
+        setError('Por favor corrige los errores indicados.');
+      } else {
+        setError(err instanceof Error ? err.message : 'Error al crear la cita');
+      }
+    },
   });
 
   const updateStatusMutation = useMutation({

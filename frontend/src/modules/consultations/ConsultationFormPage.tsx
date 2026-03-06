@@ -6,6 +6,7 @@ import {
   patientsApi,
   CreateConsultationInput,
   Consultation,
+  ApiError,
 } from '../../services/api';
 
 type SectionKey =
@@ -181,7 +182,13 @@ export function ConsultationFormPage({ mode }: { mode: 'new' | 'edit' }) {
       qc.invalidateQueries({ queryKey: ['patient-history'] });
       navigate(`/consultations/${c.id}`);
     },
-    onError: (err: Error) => setError(err.message),
+    onError: (err: unknown) => {
+      if (err instanceof ApiError && err.errors.length > 0) {
+        setError(err.errors.map((e) => `${e.field}: ${e.message}`).join(' | '));
+      } else {
+        setError(err instanceof Error ? err.message : 'Error al guardar la consulta');
+      }
+    },
   });
 
   const updateMutation = useMutation({
@@ -190,7 +197,13 @@ export function ConsultationFormPage({ mode }: { mode: 'new' | 'edit' }) {
       qc.invalidateQueries({ queryKey: ['consultation', id] });
       navigate(`/consultations/${id}`);
     },
-    onError: (err: Error) => setError(err.message),
+    onError: (err: unknown) => {
+      if (err instanceof ApiError && err.errors.length > 0) {
+        setError(err.errors.map((e) => `${e.field}: ${e.message}`).join(' | '));
+      } else {
+        setError(err instanceof Error ? err.message : 'Error al actualizar la consulta');
+      }
+    },
   });
 
   const isPending = createMutation.isPending || updateMutation.isPending;
@@ -213,8 +226,13 @@ export function ConsultationFormPage({ mode }: { mode: 'new' | 'edit' }) {
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!form.patientId) { setError('Seleccione un paciente.'); return; }
-    if (!form.doctorId) { setError('Ingrese el ID del doctor.'); return; }
+    const validationErrors: string[] = [];
+    if (!form.patientId) validationErrors.push('Seleccione un paciente.');
+    if (!form.doctorId) validationErrors.push('Ingrese el ID del doctor.');
+    if (validationErrors.length > 0) {
+      setError(validationErrors.join(' '));
+      return;
+    }
     if (mode === 'new') {
       createMutation.mutate(form);
     } else {

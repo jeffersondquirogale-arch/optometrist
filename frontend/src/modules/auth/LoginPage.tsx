@@ -1,18 +1,42 @@
 import { useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
+import { isValidEmail } from '../../utils/validation';
 
 export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  function validateFields(): boolean {
+    let valid = true;
+    if (!email.trim()) {
+      setEmailError('El correo electrónico es obligatorio');
+      valid = false;
+    } else if (!isValidEmail(email)) {
+      setEmailError('El correo electrónico no tiene un formato válido');
+      valid = false;
+    } else {
+      setEmailError(null);
+    }
+    if (!password) {
+      setPasswordError('La contraseña es obligatoria');
+      valid = false;
+    } else {
+      setPasswordError(null);
+    }
+    return valid;
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    if (!validateFields()) return;
     setIsSubmitting(true);
     try {
       await login(email, password);
@@ -41,12 +65,21 @@ export function LoginPage() {
               id="email"
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (emailError) setEmailError(null);
+              }}
               placeholder="usuario@clinica.com"
-              required
               autoFocus
               autoComplete="email"
+              aria-invalid={!!emailError}
+              aria-describedby={emailError ? 'email-error' : undefined}
             />
+            {emailError && (
+              <span id="email-error" className="field-error">
+                {emailError}
+              </span>
+            )}
           </div>
 
           <div className="form-group">
@@ -55,11 +88,20 @@ export function LoginPage() {
               id="password"
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (passwordError) setPasswordError(null);
+              }}
               placeholder="••••••••"
-              required
               autoComplete="current-password"
+              aria-invalid={!!passwordError}
+              aria-describedby={passwordError ? 'password-error' : undefined}
             />
+            {passwordError && (
+              <span id="password-error" className="field-error">
+                {passwordError}
+              </span>
+            )}
           </div>
 
           <button type="submit" className="btn btn--primary btn--full" disabled={isSubmitting}>

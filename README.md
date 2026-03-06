@@ -241,7 +241,7 @@ cp backend/.env.example backend/.env
 | `CORS_ORIGIN` | | Origen permitido del frontend | `http://localhost:5173` |
 | `JWT_EXPIRES_IN` | | Duración del token | `8h` |
 | `SEED_ADMIN_EMAIL` | | Email del admin inicial (seed) | `admin@clinica.com` |
-| `SEED_ADMIN_PASSWORD` | | Contraseña del admin inicial (seed) | `Admin1234!` |
+| `SEED_ADMIN_PASSWORD` | | Contraseña del admin inicial (seed) | `CambiaMeAhora123!` |
 | `SEED_ADMIN_NAME` | | Nombre del admin inicial (seed) | `Administrador` |
 
 > ⚠️ **Producción**: `DATABASE_URL` y `JWT_SECRET` son obligatorias. El servidor se niega a arrancar si faltan.  

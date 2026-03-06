@@ -9,8 +9,10 @@
     "start": "node dist/server.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
+    "prisma:migrate:prod": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
-    "prisma:seed": "ts-node-dev --transpile-only prisma/seed.ts"
+    "prisma:seed": "ts-node-dev --transpile-only prisma/seed.ts",
+    "setup:prod": "npm run prisma:generate && npm run prisma:migrate:prod && npm run prisma:seed"
   },
   "prisma": {
     "seed": "ts-node-dev --transpile-only prisma/seed.ts"

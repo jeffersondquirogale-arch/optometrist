@@ -1,5 +1,8 @@
 # Sistema de Gestión Clínica Óptica
 
+> **Fase 4C — Despliegue y preparación para producción**  
+> La Fase 4C prepara el sistema para funcionar de forma confiable fuera del entorno local: Dockerfiles para backend y frontend, `docker-compose` para orquestación local/producción, mejora del endpoint `/api/health` con verificación de base de datos, variables de entorno documentadas para todos los entornos, scripts de producción para Prisma y documentación de despliegue completa.
+>
 > **Fase 4B — Validación reforzada, manejo de errores y calidad de datos clínicos**  
 > La Fase 4B endurece el sistema: las entradas son validadas más estrictamente en backend y frontend, las respuestas de error son coherentes y distinguibles (`400`, `401`, `403`, `404`, `409`, `500`), y los datos clínicos pasan por rangos clínicos razonables antes de ser persistidos.
 >
@@ -146,7 +149,10 @@ Todos los demás endpoints del API requieren el header `Authorization: Bearer <t
 
 ```
 optometrist/
+├── docker-compose.yml             # Orquestación completa (db + backend + frontend)
 ├── backend/
+│   ├── Dockerfile                 # Imagen de producción del backend
+│   ├── .env.example               # Plantilla de variables de entorno
 │   ├── prisma/
 │   │   ├── schema.prisma          # Esquema de la base de datos
 │   │   └── seed.ts                # Seed del usuario administrador inicial
@@ -168,11 +174,13 @@ optometrist/
 │   │   │   └── print/             # Endpoint de impresión dinámica
 │   │   ├── app.ts                 # Configuración de Express
 │   │   └── server.ts              # Punto de entrada del servidor
-│   ├── .env.example
 │   ├── package.json
 │   └── tsconfig.json
 │
 ├── frontend/
+│   ├── Dockerfile                 # Imagen de producción del frontend (nginx)
+│   ├── nginx.conf                 # Configuración nginx para SPA
+│   ├── .env.example               # Plantilla de variables de entorno
 │   ├── src/
 │   │   ├── layouts/
 │   │   │   └── AppLayout.tsx      # Layout principal con navegación y logout
@@ -214,6 +222,43 @@ optometrist/
 - Node.js ≥ 18
 - PostgreSQL ≥ 14
 - npm ≥ 9
+- Docker y Docker Compose (opcional, para despliegue con contenedores)
+
+### Variables de entorno del backend
+
+Copia el archivo de ejemplo y completa los valores:
+
+```bash
+cp backend/.env.example backend/.env
+```
+
+| Variable | Obligatoria | Descripción | Valor por defecto |
+|---|:---:|---|---|
+| `DATABASE_URL` | ✅ | URL de conexión PostgreSQL | — |
+| `JWT_SECRET` | ✅ | Secreto JWT (mínimo 32 caracteres) | — |
+| `PORT` | | Puerto del servidor | `3000` |
+| `NODE_ENV` | | Entorno de ejecución | `development` |
+| `CORS_ORIGIN` | | Origen permitido del frontend | `http://localhost:5173` |
+| `JWT_EXPIRES_IN` | | Duración del token | `8h` |
+| `SEED_ADMIN_EMAIL` | | Email del admin inicial (seed) | `admin@clinica.com` |
+| `SEED_ADMIN_PASSWORD` | | Contraseña del admin inicial (seed) | `Admin1234!` |
+| `SEED_ADMIN_NAME` | | Nombre del admin inicial (seed) | `Administrador` |
+
+> ⚠️ **Producción**: `DATABASE_URL` y `JWT_SECRET` son obligatorias. El servidor se niega a arrancar si faltan.  
+> Genera un JWT_SECRET seguro con: `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`
+
+### Variables de entorno del frontend
+
+```bash
+cp frontend/.env.example frontend/.env
+```
+
+| Variable | Descripción | Valor por defecto |
+|---|---|---|
+| `VITE_API_URL` | URL base del API (solo necesaria en producción) | `/api` (proxy Vite en dev) |
+
+> En desarrollo, el proxy de Vite redirige automáticamente `/api` al backend local (`http://localhost:3000`).  
+> En producción, define `VITE_API_URL=https://api.tu-dominio.com/api` antes de ejecutar `npm run build`.
 
 ### Backend
 
@@ -231,7 +276,7 @@ cp .env.example .env
 # Generar el cliente Prisma
 npm run prisma:generate
 
-# Ejecutar las migraciones
+# Ejecutar las migraciones (desarrollo)
 npm run prisma:migrate
 
 # Crear el usuario administrador inicial
@@ -243,11 +288,24 @@ npm run dev
 
 El servidor estará disponible en `http://localhost:3000`.
 
+#### Scripts npm disponibles (backend)
+
+| Script | Descripción |
+|---|---|
+| `npm run dev` | Servidor de desarrollo con recarga automática |
+| `npm run build` | Compila TypeScript a `dist/` |
+| `npm start` | Inicia el servidor compilado (producción) |
+| `npm run prisma:generate` | Genera el cliente Prisma |
+| `npm run prisma:migrate` | Ejecuta migraciones en desarrollo |
+| `npm run prisma:migrate:prod` | Aplica migraciones en producción (`migrate deploy`) |
+| `npm run prisma:seed` | Crea el usuario administrador inicial |
+| `npm run setup:prod` | Secuencia completa de arranque en producción (generate → migrate:prod → seed) |
+
 #### Endpoints disponibles
 
 | Método | Ruta | Descripción | Auth | Roles |
 |---|---|---|---|---|
-| GET | `/api/health` | Estado del servidor | No | Público |
+| GET | `/api/health` | Estado del servidor y BD | No | Público |
 | POST | `/api/auth/login` | Iniciar sesión | No | Público |
 | GET | `/api/auth/me` | Usuario autenticado | Sí | Todos los roles |
 | GET | `/api/patients` | Listado de pacientes (soporta `?q=`) | Sí | Todos los roles |
@@ -467,6 +525,143 @@ La Fase 2 amplía el sistema con:
 - **Auditoría automática** de creación y edición de consultas
 - **Gestión de citas** con cambio de estado inline
 - **Perfiles de paciente** con acceso directo a historial y evolución
+
+---
+
+## Notas de la Fase 4C
+
+La Fase 4C prepara el sistema para operar de forma confiable fuera del entorno local de desarrollo:
+
+### Contenedores Docker
+
+El repositorio incluye soporte completo de Docker para desarrollo reproducible y despliegue en producción:
+
+- **`backend/Dockerfile`**: imagen multi-stage que compila TypeScript en el primer stage y genera una imagen ligera de producción en el segundo (solo dependencias de producción, sin devDependencies).
+- **`frontend/Dockerfile`**: imagen multi-stage que construye los assets estáticos con Vite y los sirve con nginx.
+- **`frontend/nginx.conf`**: configuración nginx para SPA React (todas las rutas sirven `index.html`), con cabeceras de caché apropiadas.
+- **`docker-compose.yml`**: orquesta PostgreSQL 16, el backend y el frontend en una sola pila.
+
+#### Inicio rápido con Docker Compose
+
+```bash
+# 1. Copiar y editar variables de entorno
+cp backend/.env.example backend/.env
+# Editar backend/.env: establecer JWT_SECRET, SEED_ADMIN_PASSWORD, etc.
+
+# 2. Levantar la pila completa
+docker compose up --build
+
+# 3. En un segundo terminal, ejecutar migraciones y seed (solo la primera vez)
+docker compose exec backend npm run setup:prod
+
+# La aplicación estará disponible en:
+#   Frontend: http://localhost
+#   Backend API: http://localhost:3000
+#   Health check: http://localhost:3000/api/health
+```
+
+> **Nota**: `docker-compose.yml` usa valores predeterminados seguros para `POSTGRES_USER`, `POSTGRES_PASSWORD` y `POSTGRES_DB`. Para producción real, define estas variables en un archivo `.env` en la raíz del repositorio.
+
+#### Variables de `docker-compose.yml`
+
+Crea un archivo `.env` en la raíz del repositorio para personalizar la pila:
+
+```env
+# PostgreSQL
+POSTGRES_USER=optometrist
+POSTGRES_PASSWORD=mi_password_seguro
+POSTGRES_DB=optometrist_db
+
+# Backend
+JWT_SECRET=mi_jwt_secret_de_al_menos_32_caracteres
+CORS_ORIGIN=http://localhost
+JWT_EXPIRES_IN=8h
+
+# Seed del administrador
+SEED_ADMIN_EMAIL=admin@miclinica.com
+SEED_ADMIN_PASSWORD=MiPasswordSeguro123!
+SEED_ADMIN_NAME="Administrador"
+
+# Frontend (URL del backend para el build de producción)
+VITE_API_URL=http://localhost:3000/api
+```
+
+### Endpoint de salud mejorado
+
+`GET /api/health` ahora verifica la conectividad real con la base de datos:
+
+```json
+// Respuesta exitosa (200)
+{ "status": "ok", "db": "connected", "timestamp": "2024-01-01T00:00:00.000Z" }
+
+// Error de base de datos (503)
+{ "status": "error", "db": "disconnected", "timestamp": "2024-01-01T00:00:00.000Z" }
+```
+
+Útil para health checks de Docker, load balancers y plataformas de despliegue.
+
+### Despliegue manual (sin Docker)
+
+#### Backend en producción
+
+```bash
+cd backend
+
+# 1. Instalar dependencias de producción
+npm ci --omit=dev
+
+# 2. Generar cliente Prisma y aplicar migraciones
+npm run prisma:generate
+npm run prisma:migrate:prod   # usa 'migrate deploy' (sin prompts)
+
+# 3. Crear administrador inicial (solo la primera vez)
+npm run prisma:seed
+
+# 4. Compilar y arrancar
+npm run build
+npm start
+```
+
+#### Frontend en producción
+
+```bash
+cd frontend
+
+# 1. Definir URL del backend
+export VITE_API_URL=https://api.tu-dominio.com/api
+
+# 2. Construir assets estáticos
+npm run build   # genera dist/
+
+# 3. Servir con cualquier servidor estático (nginx, caddy, etc.)
+# o previsualizar localmente:
+npm run preview
+```
+
+### CORS y proxy inverso
+
+- En desarrollo, el proxy de Vite (`vite.config.ts`) redirige `/api` al backend en `localhost:3000`, por lo que no se necesita CORS ni configuración especial.
+- En producción, configura `CORS_ORIGIN` en el backend con la URL exacta del frontend (ej: `https://app.tu-dominio.com`). El backend ya usa `credentials: true` para soportar tokens en headers.
+- Si usas un proxy inverso (nginx, caddy, Traefik), asegúrate de pasar los headers `Authorization` al backend sin modificación.
+
+### Validación de configuración al arranque
+
+El backend valida todas las variables de entorno requeridas al iniciar usando Zod. Si falta `DATABASE_URL` o `JWT_SECRET`, el proceso termina con un error descriptivo antes de aceptar conexiones. Esto evita arrancar con configuración incompleta en producción.
+
+### Seed y bootstrap del administrador
+
+El script de seed (`npm run prisma:seed`) es idempotente: si el usuario con el email configurado ya existe, no hace nada. Esto lo hace seguro para ejecutar en cada despliegue como parte de `npm run setup:prod`.
+
+Para producción, personaliza las credenciales del administrador inicial con variables de entorno antes de ejecutar el seed:
+
+```bash
+SEED_ADMIN_EMAIL=admin@miclinica.com \
+SEED_ADMIN_PASSWORD=MiPasswordMuySeguro! \
+SEED_ADMIN_NAME="Dr. Admin" \
+npm run prisma:seed
+```
+
+> ⚠️ **Importante**: Cambia la contraseña del administrador después del primer inicio de sesión. Las credenciales del seed son solo para el bootstrap inicial.
 
 ---
 

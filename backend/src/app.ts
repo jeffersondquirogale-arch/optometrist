@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import { env } from './config/env';
+import { prisma } from './config/prisma';
 import { errorMiddleware } from './middlewares/error.middleware';
 import { notFoundMiddleware } from './middlewares/not-found.middleware';
 import { authMiddleware } from './middlewares/auth.middleware';
@@ -45,8 +46,13 @@ const apiLimiter = rateLimit({
 });
 
 // ─── Health check ─────────────────────────────────────────────────────────────
-app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+app.get('/api/health', async (_req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ status: 'ok', db: 'connected', timestamp: new Date().toISOString() });
+  } catch {
+    res.status(503).json({ status: 'error', db: 'disconnected', timestamp: new Date().toISOString() });
+  }
 });
 
 // ─── Auth (rutas públicas) ────────────────────────────────────────────────────

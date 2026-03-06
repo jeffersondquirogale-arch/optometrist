@@ -792,7 +792,7 @@ export function ConsultationFormPage({ mode }: { mode: 'new' | 'edit' }) {
             <button
               type="button"
               className="btn btn-secondary"
-              onClick={() => navigate(mode === 'edit' ? `/consultations/${id}` : '/')}
+              onClick={() => navigate(mode === 'edit' ? `/consultations/${id}` : '/consultations')}
             >
               Cancelar
             </button>

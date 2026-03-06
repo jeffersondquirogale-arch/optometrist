@@ -26,6 +26,12 @@ export function AppLayout() {
         </div>
         <nav className="app-nav">
           <NavLink to="/" end className={({ isActive }) => (isActive ? 'active' : '')}>
+            Dashboard
+          </NavLink>
+          <NavLink
+            to="/patients"
+            className={({ isActive }) => (isActive ? 'active' : '')}
+          >
             Pacientes
           </NavLink>
           {canCreateConsultation() && (
@@ -61,7 +67,7 @@ export function AppLayout() {
       </main>
 
       <footer className="app-footer">
-        <p>Sistema de Gestión Clínica Óptica — Fase 4A</p>
+        <p>Sistema de Gestión Clínica Óptica — Fase 4D</p>
       </footer>
     </div>
   );

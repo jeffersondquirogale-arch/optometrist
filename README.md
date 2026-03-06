@@ -1,5 +1,8 @@
 # Sistema de Gestión Clínica Óptica
 
+> **Fase 4D — Dashboard y reportes operacionales**  
+> La Fase 4D agrega un dashboard principal de bienvenida que se convierte en la pantalla de inicio después del login. Incluye tarjetas de resumen, citas de hoy, próximas citas, pacientes y consultas recientes, resumen de citas por estado y accesos rápidos adaptados al rol del usuario. El backend expone cinco nuevos endpoints de dashboard bajo `/api/dashboard`.
+>
 > **Fase 4C — Despliegue y preparación para producción**  
 > La Fase 4C prepara el sistema para funcionar de forma confiable fuera del entorno local: Dockerfiles para backend y frontend, `docker-compose` para orquestación local/producción, mejora del endpoint `/api/health` con verificación de base de datos, variables de entorno documentadas para todos los entornos, scripts de producción para Prisma y documentación de despliegue completa.
 >
@@ -170,6 +173,7 @@ optometrist/
 │   │   │   ├── doctors/           # CRUD de perfiles de doctores
 │   │   │   ├── consultations/     # CRUD + historial + evolución
 │   │   │   ├── appointments/      # CRUD de citas
+│   │   │   ├── dashboard/         # Endpoints de dashboard y reportes
 │   │   │   ├── charts/            # Evolución clínica (series longitudinales)
 │   │   │   └── print/             # Endpoint de impresión dinámica
 │   │   ├── app.ts                 # Configuración de Express
@@ -193,6 +197,7 @@ optometrist/
 │   │   │   ├── patients/          # Listado, detalle, historial, evolución
 │   │   │   ├── consultations/     # Nueva/editar consulta, detalle
 │   │   │   ├── appointments/      # Listado y gestión de citas
+│   │   │   ├── dashboard/         # Dashboard principal y widgets
 │   │   │   └── print-template/    # Ficha de consulta imprimible (A4)
 │   │   ├── router/
 │   │   │   ├── index.tsx          # Definición de rutas (con RoleGuard)
@@ -326,6 +331,11 @@ El servidor estará disponible en `http://localhost:3000`.
 | POST | `/api/appointments` | Crear cita | Sí | Todos los roles |
 | PATCH | `/api/appointments/:id` | Actualizar cita | Sí | Todos los roles |
 | GET | `/api/print/consultations/:id` | Datos para impresión | Sí | ADMIN, DOCTOR |
+| GET | `/api/dashboard/summary` | Estadísticas resumidas del dashboard | Sí | Todos los roles |
+| GET | `/api/dashboard/recent-patients` | Pacientes registrados recientemente (5) | Sí | Todos los roles |
+| GET | `/api/dashboard/recent-consultations` | Consultas recientes (5); vacío para STAFF | Sí | Todos los roles |
+| GET | `/api/dashboard/today-appointments` | Citas programadas para hoy | Sí | Todos los roles |
+| GET | `/api/dashboard/upcoming-appointments` | Próximas citas (5, excluyendo canceladas) | Sí | Todos los roles |
 
 > **Nota**: "Todos los roles" significa cualquier usuario autenticado (`ADMIN`, `DOCTOR` o `STAFF`). Las rutas marcadas como "Público" no requieren autenticación.
 
@@ -350,7 +360,8 @@ La aplicación estará disponible en `http://localhost:5173`.
 |---|---|---|
 | `/login` | Página de inicio de sesión | Público |
 | `/403` | Página de acceso denegado | Público |
-| `/` | Listado de pacientes | Todos los roles |
+| `/` | **Dashboard principal** | Todos los roles |
+| `/patients` | Listado de pacientes | Todos los roles |
 | `/patients/new` | Crear nuevo paciente | ADMIN, STAFF |
 | `/patients/:id` | Detalle del paciente | Todos los roles |
 | `/patients/:id/history` | Historial de consultas | Todos los roles |
@@ -525,6 +536,56 @@ La Fase 2 amplía el sistema con:
 - **Auditoría automática** de creación y edición de consultas
 - **Gestión de citas** con cambio de estado inline
 - **Perfiles de paciente** con acceso directo a historial y evolución
+
+---
+
+## Notas de la Fase 4D
+
+La Fase 4D agrega un dashboard principal y vistas de reporte operacional:
+
+### Dashboard principal (`/`)
+
+Después del login, los usuarios aterrizan en el dashboard en lugar de la lista de pacientes. El dashboard incluye:
+
+- **Tarjetas de estadísticas**: total de pacientes activos, citas de hoy, próximas citas, consultas de los últimos 7 días.
+- **Accesos rápidos**: botones directos a las acciones más frecuentes (nuevo paciente, nueva consulta, citas, pacientes, consultas), filtrados según el rol.
+- **Citas de hoy**: listado de las citas programadas para la fecha actual.
+- **Próximas citas**: las próximas 5 citas futuras no canceladas.
+- **Pacientes recientes**: los últimos 5 pacientes registrados (con enlace directo al detalle).
+- **Consultas recientes**: las últimas 5 consultas (visible solo para `ADMIN` y `DOCTOR`).
+- **Resumen por estado**: barras proporcionales para cada estado de cita.
+
+### Comportamiento por rol en el dashboard
+
+| Elemento | ADMIN | DOCTOR | STAFF |
+|---|:---:|:---:|:---:|
+| Total de pacientes | ✅ | ✅ | ✅ |
+| Citas de hoy | ✅ | ✅ | ✅ |
+| Próximas citas | ✅ | ✅ | ✅ |
+| Consultas (7 días) | ✅ | ✅ | ❌ |
+| Citas de hoy (widget) | ✅ | ✅ | ✅ |
+| Próximas citas (widget) | ✅ | ✅ | ✅ |
+| Pacientes recientes | ✅ | ✅ | ✅ |
+| Consultas recientes | ✅ | ✅ | ❌ |
+| Resumen por estado | ✅ | ✅ | ✅ |
+| Acceso rápido "Nuevo Paciente" | ✅ | ❌ | ✅ |
+| Acceso rápido "Nueva Consulta" | ✅ | ✅ | ❌ |
+
+### Backend — Nuevos endpoints de dashboard
+
+Todos los endpoints requieren autenticación. Los datos de consultas se filtran por rol en el servidor.
+
+| Endpoint | Respuesta |
+|---|---|
+| `GET /api/dashboard/summary` | `totalPatients`, `todayAppointmentsCount`, `upcomingAppointmentsCount`, `recentConsultationsCount`, `appointmentsByStatus` |
+| `GET /api/dashboard/recent-patients` | Últimos 5 pacientes activos |
+| `GET /api/dashboard/recent-consultations` | Últimas 5 consultas (vacío para `STAFF`) |
+| `GET /api/dashboard/today-appointments` | Citas del día actual |
+| `GET /api/dashboard/upcoming-appointments` | Próximas 5 citas futuras no canceladas |
+
+### Navegación actualizada
+
+La barra de navegación ahora expone: **Dashboard** · **Pacientes** · **Consultas** (solo ADMIN/DOCTOR) · **Citas**
 
 ---
 

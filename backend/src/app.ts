@@ -18,6 +18,7 @@ import { consultationsRouter } from './modules/consultations/consultations.route
 import { appointmentsRouter } from './modules/appointments/appointments.router';
 import { printRouter } from './modules/print/print.router';
 import { chartsRouter } from './modules/charts/charts.router';
+import { dashboardRouter } from './modules/dashboard/dashboard.router';
 
 const app = express();
 
@@ -65,6 +66,7 @@ app.use('/api/consultations', apiLimiter, authMiddleware, consultationsRouter);
 app.use('/api/appointments', apiLimiter, authMiddleware, appointmentsRouter);
 app.use('/api/print', apiLimiter, authMiddleware, printRouter);
 app.use('/api/charts', apiLimiter, authMiddleware, chartsRouter);
+app.use('/api/dashboard', apiLimiter, authMiddleware, dashboardRouter);
 
 // ─── Middlewares de error ─────────────────────────────────────────────────────
 app.use(notFoundMiddleware);

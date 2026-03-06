@@ -28,7 +28,7 @@ export function PatientNewPage() {
     mutationFn: patientsApi.create,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['patients'] });
-      navigate('/');
+      navigate('/patients');
     },
     onError: (err: unknown) => {
       if (err instanceof ApiError && err.errors.length > 0) {
@@ -226,7 +226,7 @@ export function PatientNewPage() {
             <button
               type="button"
               className="btn btn-secondary"
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/patients')}
             >
               Cancelar
             </button>
